@@ -22,12 +22,12 @@ export default async function PortalDeliverables() {
             <TableBody>{rows.map((d) => (
               <TableRow key={d.id}>
                 <TableCell className="pl-4 font-medium">{d.name}</TableCell>
-                <TableCell className="text-sm">{d.project?.name}</TableCell>
-                <TableCell><StatusBadge def={REVIEW_STATUS} value={d.client_review_status} /></TableCell>
-                <TableCell><StatusBadge def={APPROVAL_STATUS} value={d.approval_status} />{d.approved_at && <p className="text-[11px] text-muted-foreground">{formatDate(d.approved_at)}</p>}</TableCell>
-                <TableCell className="text-sm">{formatDate(d.submitted_at)}</TableCell>
-                <TableCell className="text-sm">{formatDate(d.final_delivered_at)}</TableCell>
-                <TableCell className="pr-4">{d.file ? <a href={`/api/files/${d.file.id}?download=1`} className="text-sm text-primary hover:underline">Download v{d.file.version}</a> : "—"}</TableCell>
+                <TableCell label="Project" className="text-sm">{d.project?.name}</TableCell>
+                <TableCell label="Review"><StatusBadge def={REVIEW_STATUS} value={d.client_review_status} /></TableCell>
+                <TableCell label="Approval"><StatusBadge def={APPROVAL_STATUS} value={d.approval_status} />{d.approved_at && <p className="text-[11px] text-muted-foreground">{formatDate(d.approved_at)}</p>}</TableCell>
+                <TableCell label="Submitted" className="text-sm">{formatDate(d.submitted_at)}</TableCell>
+                <TableCell label="Delivered" className="text-sm">{formatDate(d.final_delivered_at)}</TableCell>
+                <TableCell label="File" className="pr-4">{d.file ? <a href={`/api/files/${d.file.id}?download=1`} className="text-sm text-primary hover:underline">Download v{d.file.version}</a> : "—"}</TableCell>
               </TableRow>
             ))}</TableBody>
           </Table>

@@ -3,17 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  BarChart3, Building2, CheckSquare, ChevronsLeft, ChevronsRight, FileSignature, FileText, Files, FolderKanban,
-  KanbanSquare, LayoutDashboard, Receipt, Settings, Target, Users, Wallet, type LucideIcon,
-} from "lucide-react";
+import { ChevronsLeft, ChevronsRight, LayoutDashboard } from "lucide-react";
 import { LinkIcon } from "@/components/app/nav-feedback";
 import { Logo } from "@/components/app/logo";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { ICONS } from "./icons";
 import type { NavSection } from "./nav-config";
-
-const ICONS: Record<string, LucideIcon> = { BarChart3, Building2, CheckSquare, FileSignature, FileText, Files, FolderKanban, KanbanSquare, LayoutDashboard, Receipt, Settings, Target, Users, Wallet };
 
 export function NavLinks({ sections, collapsed = false, onNavigate }: { sections: NavSection[]; collapsed?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();

@@ -40,11 +40,11 @@ export default async function ReportsPage({ searchParams }: PageProps<"/reports"
               <TableHeader><TableRow>{report.columns.map((c, i) => <TableHead key={c.key} className={cn(c.align === "right" && "text-right", i === 0 && "pl-4", i === report.columns.length - 1 && "pr-4")}>{c.label}</TableHead>)}</TableRow></TableHeader>
               <TableBody>
                 {report.rows.map((r, ri) => (
-                  <TableRow key={ri}>{report.columns.map((c, i) => <TableCell key={c.key} className={cn("tabular-nums", c.align === "right" && "text-right", i === 0 && "pl-4 font-medium", i === report.columns.length - 1 && "pr-4")}>{c.money ? formatINR(Number(r[c.key])) : r[c.key]}</TableCell>)}</TableRow>
+                  <TableRow key={ri}>{report.columns.map((c, i) => <TableCell key={c.key} label={i ? c.label : undefined} className={cn("tabular-nums", c.align === "right" && "text-right", i === 0 && "pl-4 font-medium", i === report.columns.length - 1 && "pr-4")}>{c.money ? formatINR(Number(r[c.key])) : r[c.key]}</TableCell>)}</TableRow>
                 ))}
               </TableBody>
               {totals.length > 0 && (
-                <TableFooter><TableRow>{report.columns.map((c, i) => <TableCell key={c.key} className={cn("font-semibold tabular-nums", c.align === "right" && "text-right", i === 0 && "pl-4", i === report.columns.length - 1 && "pr-4")}>{i === 0 ? "Total" : c.money ? formatINR(totals.find((t) => t[0] === c.key)?.[1] ?? 0) : ""}</TableCell>)}</TableRow></TableFooter>
+                <TableFooter><TableRow>{report.columns.map((c, i) => <TableCell key={c.key} label={i && c.money ? c.label : undefined} className={cn("font-semibold tabular-nums", c.align === "right" && "text-right", i === 0 && "pl-4", i === report.columns.length - 1 && "pr-4")}>{i === 0 ? "Total" : c.money ? formatINR(totals.find((t) => t[0] === c.key)?.[1] ?? 0) : ""}</TableCell>)}</TableRow></TableFooter>
               )}
             </Table>
           )}

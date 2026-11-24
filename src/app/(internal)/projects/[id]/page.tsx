@@ -87,7 +87,7 @@ export default async function ProjectWorkspace({ params, searchParams }: PagePro
 
       {tab === "overview" && (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             <div className="rounded-xl border bg-card p-4"><p className="text-xs font-medium text-muted-foreground">Progress</p><p className="mt-1 text-2xl font-semibold tabular-nums">{project.progress}%</p><ProgressBar value={project.progress} className="mt-2" /><p className="mt-1 text-[11px] text-muted-foreground">{project.progress_mode === "auto" ? (counts.deliverables ? "From approved deliverables" : "From completed tasks") : "Set manually"}</p></div>
             <StatCard label="Delivery date" value={formatDate(project.due_date)} hint={due === null ? undefined : due < 0 ? `${-due} days overdue` : `${due} days left`} icon={CalendarDays} tone={due !== null && due < 0 && !["completed", "cancelled"].includes(project.status) ? "danger" : "default"} />
             <StatCard label="Deliverables" value={counts.deliverables} hint={counts.pendingApprovals ? `${counts.pendingApprovals} awaiting client` : undefined} icon={Layers} />

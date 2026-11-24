@@ -9,6 +9,7 @@ import { formatDate, formatINR } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/app/page-header";
+import { ContactActions } from "@/components/app/contact-actions";
 import { DescriptionList, Panel, StatCard } from "@/components/app/panel";
 import { StatusBadge } from "@/components/app/status-badge";
 import { PersonCell } from "@/components/app/user-avatar";
@@ -96,14 +97,15 @@ async function Overview({ session, client, finance }: { session: Awaited<ReturnT
   const m = money[client.id] ?? { invoiced: 0, received: 0, outstanding: 0 };
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard label="Projects" value={projectCount ?? 0} hint={`${activeCount ?? 0} active`} icon={FolderKanban} />
         {finance && <StatCard label="Total invoiced" value={formatINR(m.invoiced)} icon={Receipt} />}
         {finance && <StatCard label="Revenue received" value={formatINR(m.received)} icon={Wallet} tone="success" />}
         {finance && <StatCard label="Outstanding" value={formatINR(m.outstanding)} icon={Wallet} tone={m.outstanding > 0 ? "warning" : "default"} />}
       </div>
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_1fr]">
         <Panel title="Company details">
+          <ContactActions labels phone={client.phone} email={client.email} name={client.contact_person ?? client.company_name} className="mb-5" />
           <DescriptionList items={[
             { label: "Client ID", value: client.code },
             { label: "Contact person", value: client.contact_person },

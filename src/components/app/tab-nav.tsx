@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { LinkPendingLine } from "@/components/app/nav-feedback";
+import { ScrollActive } from "./scroll-active";
 import { cn } from "@/lib/utils";
 
 /** Server-rendered tabs driven by ?tab= so each tab loads only its own data. */
 export function TabNav({ base, tabs, current }: { base: string; tabs: { id: string; label: string; count?: number | null }[]; current: string }) {
   return (
-    <div className="mb-6 overflow-x-auto border-b">
+    <ScrollActive watch={current} className="relative mb-6 overflow-x-auto border-b">
       <nav className="flex min-w-max gap-1" aria-label="Tabs">
         {tabs.map((t, i) => {
           const active = t.id === current;
@@ -24,7 +25,7 @@ export function TabNav({ base, tabs, current }: { base: string; tabs: { id: stri
           );
         })}
       </nav>
-    </div>
+    </ScrollActive>
   );
 }
 

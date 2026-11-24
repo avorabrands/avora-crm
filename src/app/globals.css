@@ -148,3 +148,44 @@
     @apply h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30;
   }
 }
+
+/* ── Phones & tablets ───────────────────────────────────────────────────────────────
+   Unlayered on purpose: these must win over per-cell utility classes. */
+@media screen and (max-width: 1023px) {
+  /* Any .stack table becomes a list of cards; each cell shows its column name. */
+  .stack, .stack > tbody, .stack > tfoot { display: block; width: 100%; min-width: 0; }
+  .stack > thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .stack > tbody > tr, .stack > tfoot > tr {
+    position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.625rem 1rem; padding: 0.875rem 1rem; align-items: start;
+  }
+  .stack > tbody > tr:active { background: var(--muted); }
+  .stack > tbody > tr > td, .stack > tfoot > tr > td {
+    display: block; min-width: 0; max-width: none; padding: 0; text-align: left; white-space: normal; overflow-wrap: anywhere;
+  }
+  .stack td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 0.125rem; font-size: 11px; font-weight: 400; color: var(--muted-foreground); }
+  .stack > tbody > tr > td:first-child, .stack td[data-title], .stack td[data-actions] { grid-column: 1 / -1; }
+  .stack > tbody > tr > td:first-child { padding-right: 1.25rem; font-size: 0.95rem; }
+  .stack td > * { max-width: 100%; }
+  .stack td[data-actions] > * { justify-content: flex-start; flex-wrap: wrap; }
+  .stack td[data-actions]:empty, .stack td.m-hide { display: none; }
+  /* the whole card opens the record; other controls stay above that hit area */
+  .stack > tbody > tr > td:first-child > a:first-of-type::after { content: ""; position: absolute; inset: 0; }
+  .stack td:not(:first-child) :is(a, button, select, input, label) { position: relative; z-index: 1; }
+  .stack td:first-child :is(button, select, input) { position: relative; z-index: 1; }
+}
+
+/* Comfortable touch targets, and 16px inputs so iOS doesn't zoom in on focus */
+@media screen and (min-width: 640px) and (max-width: 1023px) {
+  .stack > tbody > tr, .stack > tfoot > tr { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (max-width: 767px), (pointer: coarse) {
+  [data-slot="input"], .field-select { min-height: 44px; font-size: 16px !important; }
+  [data-slot="textarea"] { font-size: 16px; }
+  /* by class, because dialog/sheet triggers replace the button's data-slot */
+  [class~="group/button"] { min-height: 42px; }
+  [class~="group/button"]:is(.size-8, .size-7, .size-6) { min-width: 42px; }
+  [data-slot="dropdown-menu-item"], [data-slot="command-item"] { min-height: 44px; }
+  input[type="checkbox"]:not(.sr-only) { width: 20px; height: 20px; }
+}

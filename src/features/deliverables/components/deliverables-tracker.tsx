@@ -23,6 +23,8 @@ type Props = { projectId: string; rows: DeliverableRow[]; staff: Option[]; canMa
 
 export function DeliverablesTracker({ projectId, rows, staff, canManage }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [details, setDetails] = useState<Set<string>>(new Set()); // phone cards showing every field
+  const toggleDetails = (id: string) => setDetails((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   const [filter, setFilter] = useState<string>("all");
   const [pending, start] = useTransition();
   const router = useRouter();
@@ -104,9 +106,9 @@ export function DeliverablesTracker({ projectId, rows, staff, canManage }: Props
           </div>
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} /></div>
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0">
           {STAGES.map((s) => (
-            <button key={s.key} onClick={() => setFilter(s.key)} className={cn("rounded-full border px-3 py-1 text-xs transition-colors", filter === s.key ? "border-primary bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground")}>
+            <button key={s.key} onClick={() => setFilter(s.key)} className={cn("shrink-0 rounded-full border px-3 py-2.5 text-xs transition-colors md:py-1", filter === s.key ? "border-primary bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground")}>
               {s.label} <span className="ml-1 font-semibold tabular-nums">{s.value}</span>
             </button>
           ))}
@@ -114,7 +116,7 @@ export function DeliverablesTracker({ projectId, rows, staff, canManage }: Props
       </div>
 
       {ids.length > 0 && (
-        <div className="sticky top-16 z-20 flex flex-wrap items-center gap-2 rounded-xl border border-primary/40 bg-accent p-2.5 text-sm shadow-sm">
+        <div className="sticky top-16 z-20 flex items-center gap-2 overflow-x-auto rounded-xl *:shrink-0 md:flex-wrap border border-primary/40 bg-accent p-2.5 text-sm shadow-sm">
           <span className="px-1 font-medium">{ids.length} selected</span>
           <select className="field-select w-auto" value="" onChange={(e) => e.target.value && patch(ids, { design_status: e.target.value as DeliverablePatch["design_status"] })} aria-label="Set design status">
             <option value="">Design status…</option>{DESIGN_STATUS.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -134,9 +136,9 @@ export function DeliverablesTracker({ projectId, rows, staff, canManage }: Props
         </div>
       )}
 
-      {pending && <div role="status" className="fixed right-4 bottom-4 z-50 flex items-center gap-2 rounded-full border bg-popover px-4 py-2 text-sm shadow-lg"><Loader2 className="size-4 animate-spin text-primary" /> Saving…</div>}
+      {pending && <div role="status" className="fixed right-4 bottom-24 z-50 flex lg:bottom-4 items-center gap-2 rounded-full border bg-popover px-4 py-2 text-sm shadow-lg"><Loader2 className="size-4 animate-spin text-primary" /> Saving…</div>}
       <div aria-busy={pending} className={cn("overflow-x-auto rounded-xl border bg-card transition-opacity", pending && "pointer-events-none opacity-60")}>
-        <table className="w-full min-w-[1200px] text-sm">
+        <table className="stack w-full text-sm lg:min-w-[1200px]">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>
               <th className="w-10 px-3 py-2.5"><input type="checkbox" checked={allChecked} onChange={toggleAll} aria-label="Select all" className="size-4 accent-primary" /></th>
@@ -156,47 +158,48 @@ export function DeliverablesTracker({ projectId, rows, staff, canManage }: Props
           </thead>
           <tbody>
             {visible.map((d, i) => (
-              <tr key={d.id} className={cn("border-b last:border-0 hover:bg-muted/30", selected.has(d.id) && "bg-accent/40")}>
-                <td className="px-3 py-2"><input type="checkbox" checked={selected.has(d.id)} onChange={() => toggle(d.id)} aria-label={`Select ${d.name}`} className="size-4 accent-primary" /></td>
-                <td className="py-2 text-xs text-muted-foreground tabular-nums">{d.position || i + 1}</td>
-                <td className="max-w-64 py-2 pr-3">
+              <tr key={d.id} className={cn("max-lg:gap-y-2! border-b last:border-0 hover:bg-muted/30", selected.has(d.id) && "bg-accent/40")}>
+                <td className="px-3 py-2 max-lg:absolute! max-lg:top-3.5 max-lg:right-4 max-lg:w-auto max-lg:pr-0!"><input type="checkbox" checked={selected.has(d.id)} onChange={() => toggle(d.id)} aria-label={`Select ${d.name}`} className="size-4 accent-primary" /></td>
+                <td className="m-hide py-2 text-xs text-muted-foreground tabular-nums">{d.position || i + 1}</td>
+                <td data-title className="max-w-64 py-2 pr-3 max-lg:pr-10!">
                   <p className="truncate font-medium" title={d.name}>{d.name}</p>
                   {d.client_visible && <span className="text-[11px] text-teal-600 dark:text-teal-400">Shared with client</span>}
+                  <button type="button" onClick={() => toggleDetails(d.id)} aria-expanded={details.has(d.id)} className="block py-2 text-sm font-medium text-primary lg:hidden">{details.has(d.id) ? "Hide details" : "Update details"}</button>
                 </td>
-                <td className="px-2 py-2">
+                <td data-label="Content" className={cn("px-2 py-2", !details.has(d.id) && "m-hide")}>
                   <label className="flex items-center gap-1.5 text-xs">
                     <input type="checkbox" checked={d.content_received} onChange={(e) => patch([d.id], { content_received: e.target.checked })} className="size-4 accent-primary" />
                     {d.content_received ? formatDate(d.content_received_at, "dd MMM") : "Pending"}
                   </label>
                 </td>
-                <td className="px-2 py-2">
-                  <select className="field-select h-7 w-32 text-xs" value={d.design_status} onChange={(e) => patch([d.id], { design_status: e.target.value as DeliverablePatch["design_status"] })} aria-label="Design status">
+                <td data-label="Design" className={cn("px-2 py-2", !details.has(d.id) && "m-hide")}>
+                  <select className="field-select text-xs lg:h-7 lg:w-32" value={d.design_status} onChange={(e) => patch([d.id], { design_status: e.target.value as DeliverablePatch["design_status"] })} aria-label="Design status">
                     {DESIGN_STATUS.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </td>
-                <td className="px-2 py-2">
-                  <select className="field-select h-7 w-36 text-xs" value={d.assigned_to ?? ""} onChange={(e) => patch([d.id], { assigned_to: e.target.value || null })} aria-label="Designer">
+                <td data-label="Designer" className={cn("px-2 py-2", !details.has(d.id) && "m-hide")}>
+                  <select className="field-select text-xs lg:h-7 lg:w-36" value={d.assigned_to ?? ""} onChange={(e) => patch([d.id], { assigned_to: e.target.value || null })} aria-label="Designer">
                     <option value="">Unassigned</option>{staff.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                   </select>
                 </td>
-                <td className="px-2 py-2">
-                  <select className="field-select h-7 w-36 text-xs" value={d.internal_review_status} onChange={(e) => patch([d.id], { internal_review_status: e.target.value as DeliverablePatch["internal_review_status"] })} aria-label="Internal review">
+                <td data-label="Internal review" className={cn("px-2 py-2", !details.has(d.id) && "m-hide")}>
+                  <select className="field-select text-xs lg:h-7 lg:w-36" value={d.internal_review_status} onChange={(e) => patch([d.id], { internal_review_status: e.target.value as DeliverablePatch["internal_review_status"] })} aria-label="Internal review">
                     {REVIEW_STATUS.options.map((o) => <option key={o.value} value={o.value}>{o.value === "not_started" ? "Not started" : o.label}</option>)}
                   </select>
                 </td>
-                <td className="px-2 py-2"><StatusBadge def={REVIEW_STATUS} value={d.client_review_status} /></td>
-                <td className="px-2 py-2 text-center tabular-nums">{d.revision_count > 0 ? <Pill tone="amber">{d.revision_count}</Pill> : <span className="text-muted-foreground">0</span>}</td>
-                <td className="px-2 py-2">
+                <td data-label="Client review" className={cn("px-2 py-2", !details.has(d.id) && "m-hide")}><StatusBadge def={REVIEW_STATUS} value={d.client_review_status} /></td>
+                <td data-label="Revisions" className={cn("px-2 py-2 text-center tabular-nums", !details.has(d.id) && "m-hide")}>{d.revision_count > 0 ? <Pill tone="amber">{d.revision_count}</Pill> : <span className="text-muted-foreground">0</span>}</td>
+                <td data-label="Approval" className="px-2 py-2">
                   <StatusBadge def={APPROVAL_STATUS} value={d.approval_status} />
                   {d.approved_at && <p className="mt-0.5 text-[11px] text-muted-foreground">{formatDate(d.approved_at, "dd MMM, h:mm a")}</p>}
                 </td>
-                <td className="px-2 py-2 text-xs">{formatDate(d.submitted_at, "dd MMM")}</td>
-                <td className="px-2 py-2">
+                <td data-label="Submitted" className={cn("px-2 py-2 text-xs", !details.has(d.id) && "m-hide")}>{formatDate(d.submitted_at, "dd MMM")}</td>
+                <td data-label="Delivered" className={cn("px-2 py-2", !details.has(d.id) && "m-hide")}>
                   {canManage ? (
-                    <input type="date" className="field-select h-7 w-34 text-xs" value={d.final_delivered_at ?? ""} onChange={(e) => patch([d.id], { final_delivered_at: e.target.value || null })} aria-label="Final delivery date" />
+                    <input type="date" className="field-select text-xs lg:h-7 lg:w-34" value={d.final_delivered_at ?? ""} onChange={(e) => patch([d.id], { final_delivered_at: e.target.value || null })} aria-label="Final delivery date" />
                   ) : <span className="text-xs">{formatDate(d.final_delivered_at, "dd MMM")}</span>}
                 </td>
-                <td className="px-3 py-2">
+                <td data-label="File" className="px-3 py-2">
                   <div className="flex items-center gap-1">
                     {d.file ? <a href={`/api/files/${d.file.id}`} target="_blank" rel="noreferrer" className="max-w-28 truncate text-xs text-primary hover:underline" title={d.file.name}>v{d.file.version} · {d.file.name}</a> : <span className="text-xs text-muted-foreground">No file</span>}
                     <FormDialog trigger={<Button variant="ghost" size="icon-xs" aria-label="Upload design"><Upload /></Button>} title={`Upload design · ${d.name}`} description={d.file ? `Becomes v${d.file.version + 1}; earlier versions stay in history.` : "First version of this design."} action={uploadDeliverableFile.bind(null, projectId, d.id)} submitLabel="Upload">

@@ -2,7 +2,7 @@
 
 import { cloneElement, createContext, isValidElement, startTransition, useActionState, useContext, useEffect, useId, useRef, useState, type ReactElement } from "react";
 import { useFormStatus } from "react-dom";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -96,23 +96,42 @@ export function ActionForm({ action, children, onSuccess, className, resetOnSucc
   );
 }
 
-/** Modal form: trigger → dialog → server action → toast + close + refresh. */
-export function FormDialog({ trigger, title, description, action, children, submitLabel = "Save", size = "md", onSuccess }: {
-  trigger: ReactElement; title: string; description?: string; action: FormAction; children: React.ReactNode; submitLabel?: string; size?: "md" | "lg" | "xl"; onSuccess?: (s: FormActionState) => void;
-}) {
-  const [open, setOpen] = useState(false);
+/** Open state that can also be driven by ?new=<openKey>, so "+ New" works from any page. */
+function useUrlOpen(openKey?: string) {
+  const params = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const [manual, setManual] = useState(false);
   const [key, setKey] = useState(0);
+  const fromUrl = !!openKey && params.get("new") === openKey;
+  const setOpen = (o: boolean) => {
+    setManual(o);
+    if (o) setKey((k) => k + 1);
+    else if (fromUrl) {
+      const next = new URLSearchParams(params.toString());
+      next.delete("new");
+      router.replace(next.size ? `${pathname}?${next}` : pathname, { scroll: false });
+    }
+  };
+  return { open: manual || fromUrl, setOpen, key };
+}
+
+/** Modal form: trigger → dialog → server action → toast + close + refresh. */
+export function FormDialog({ trigger, title, description, action, children, submitLabel = "Save", size = "md", onSuccess, openKey }: {
+  trigger: ReactElement; title: string; description?: string; action: FormAction; children: React.ReactNode; submitLabel?: string; size?: "md" | "lg" | "xl"; onSuccess?: (s: FormActionState) => void; openKey?: string;
+}) {
+  const { open, setOpen, key } = useUrlOpen(openKey);
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) setKey((k) => k + 1); }}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={trigger} />
-      <DialogContent className={cn("max-h-[90vh] overflow-y-auto", size === "md" ? "sm:max-w-lg" : size === "lg" ? "sm:max-w-2xl" : "sm:max-w-4xl")}>
+      <DialogContent className={cn("max-h-[90dvh] overflow-y-auto max-sm:top-auto max-sm:bottom-0 max-sm:max-w-full max-sm:translate-y-0 max-sm:rounded-b-none max-sm:pb-0", size === "md" ? "sm:max-w-lg" : size === "lg" ? "sm:max-w-2xl" : "sm:max-w-4xl")}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         <ActionForm key={key} action={action} onSuccess={(s) => { setOpen(false); onSuccess?.(s); }} className="grid gap-4">
           {children}
-          <DialogFooter>
+          <DialogFooter className="max-sm:sticky max-sm:bottom-0 max-sm:z-10 max-sm:mx-0 max-sm:-mb-px max-sm:grid max-sm:grid-cols-2 max-sm:border-t max-sm:bg-popover max-sm:px-0 max-sm:py-3 max-sm:pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <SubmitButton>{submitLabel}</SubmitButton>
           </DialogFooter>
@@ -123,22 +142,21 @@ export function FormDialog({ trigger, title, description, action, children, subm
 }
 
 /** Same as FormDialog but as a right-hand sheet for longer forms. */
-export function FormSheet({ trigger, title, description, action, children, submitLabel = "Save", onSuccess }: {
-  trigger: ReactElement; title: string; description?: string; action: FormAction; children: React.ReactNode; submitLabel?: string; onSuccess?: (s: FormActionState) => void;
+export function FormSheet({ trigger, title, description, action, children, submitLabel = "Save", onSuccess, openKey }: {
+  trigger: ReactElement; title: string; description?: string; action: FormAction; children: React.ReactNode; submitLabel?: string; onSuccess?: (s: FormActionState) => void; openKey?: string;
 }) {
-  const [open, setOpen] = useState(false);
-  const [key, setKey] = useState(0);
+  const { open, setOpen, key } = useUrlOpen(openKey);
   return (
-    <Sheet open={open} onOpenChange={(o) => { setOpen(o); if (o) setKey((k) => k + 1); }}>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger render={trigger} />
       <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
         <SheetHeader>
           <SheetTitle>{title}</SheetTitle>
           {description && <SheetDescription>{description}</SheetDescription>}
         </SheetHeader>
-        <ActionForm key={key} action={action} onSuccess={(s) => { setOpen(false); onSuccess?.(s); }} className="grid gap-4 px-4 pb-6">
+        <ActionForm key={key} action={action} onSuccess={(s) => { setOpen(false); onSuccess?.(s); }} className="grid gap-4 px-4">
           {children}
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="sticky bottom-0 z-10 -mx-4 grid grid-cols-2 gap-2 border-t bg-popover px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:flex sm:justify-end">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <SubmitButton>{submitLabel}</SubmitButton>
           </div>

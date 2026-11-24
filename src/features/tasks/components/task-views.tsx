@@ -61,10 +61,26 @@ export function TaskCalendar({ tasks, month }: { tasks: TaskRow[]; month: string
           <Button variant="outline" size="icon-sm" onClick={() => go(addMonths(anchor, 1))} aria-label="Next month"><ChevronRight /></Button>
         </div>
       </div>
-      <div className="grid grid-cols-7 border-b bg-muted/40 text-center text-[11px] font-medium text-muted-foreground">
+      <ul className="divide-y md:hidden">
+        {days.filter((d) => isSameMonth(d, anchor) && (byDay[format(d, "yyyy-MM-dd")] || isToday(d))).map((d) => (
+          <li key={d.toISOString()} className="flex gap-3 px-4 py-3">
+            <div className={cn("w-11 shrink-0 text-center", isToday(d) && "text-primary")}><p className="text-[11px] uppercase">{format(d, "EEE")}</p><p className="text-lg font-semibold">{format(d, "d")}</p></div>
+            <div className="min-w-0 flex-1 space-y-1.5">
+              {(byDay[format(d, "yyyy-MM-dd")] ?? []).map((t) => (
+                <Link key={t.id} href={`/tasks/${t.id}`} className={cn("block rounded-lg border-l-4 bg-muted/60 px-3 py-2.5 text-sm", isOverdue(t) ? "border-destructive" : ["approved", "completed"].includes(t.status) ? "border-emerald-500" : "border-primary")}>
+                  <span className="font-medium">{t.title}</span><span className="block truncate text-xs text-muted-foreground">{t.project?.name} · {TASK_STATUS.label[t.status as TaskStatus]}</span>
+                </Link>
+              ))}
+              {!byDay[format(d, "yyyy-MM-dd")] && <p className="pt-2 text-sm text-muted-foreground">Nothing due today</p>}
+            </div>
+          </li>
+        ))}
+        {tasks.length === 0 && <li className="px-4 py-8 text-center text-sm text-muted-foreground">No tasks due this month.</li>}
+      </ul>
+      <div className="hidden grid-cols-7 border-b bg-muted/40 md:grid text-center text-[11px] font-medium text-muted-foreground">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => <div key={d} className="py-2">{d}</div>)}
       </div>
-      <div className="grid grid-cols-7">
+      <div className="hidden grid-cols-7 md:grid">
         {days.map((d) => {
           const key = format(d, "yyyy-MM-dd");
           const items = byDay[key] ?? [];

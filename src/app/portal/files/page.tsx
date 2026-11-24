@@ -22,9 +22,9 @@ export default async function PortalFiles() {
             <TableBody>{rows.map((f) => (
               <TableRow key={f.id}>
                 <TableCell className="pl-4"><a href={`/api/files/${f.id}`} target="_blank" rel="noreferrer" className="font-medium hover:text-primary">{f.name}</a></TableCell>
-                <TableCell className="text-sm">{f.project?.name ?? "—"}</TableCell><TableCell className="text-sm">{f.folder}</TableCell><TableCell>v{f.version}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{formatBytes(f.size_bytes)}</TableCell><TableCell className="text-sm">{formatDate(f.created_at)}</TableCell>
-                <TableCell className="pr-4"><a href={`/api/files/${f.id}?download=1`} className="text-sm text-primary hover:underline">Download</a></TableCell>
+                <TableCell label="Project" className="text-sm">{f.project?.name ?? "—"}</TableCell><TableCell label="Folder" className="text-sm">{f.folder}</TableCell><TableCell label="Version">v{f.version}</TableCell>
+                <TableCell label="Size" className="text-xs text-muted-foreground">{formatBytes(f.size_bytes)}</TableCell><TableCell label="Shared" className="text-sm">{formatDate(f.created_at)}</TableCell>
+                <TableCell actions className="pr-4"><a href={`/api/files/${f.id}?download=1`} className="text-sm text-primary hover:underline">Download</a></TableCell>
               </TableRow>
             ))}</TableBody>
           </Table>

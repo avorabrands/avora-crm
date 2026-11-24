@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export function PrintBar({ back }: { back: string }) {
   return (
-    <div className="mx-auto mb-4 flex max-w-4xl items-center justify-between print:hidden">
+    <div className="mx-auto mb-4 flex max-w-4xl flex-wrap items-center justify-between gap-2 print:hidden">
       <a href={back} className="text-sm text-muted-foreground hover:text-foreground">← Back</a>
       <div className="flex gap-2">
         <Button variant="outline" onClick={() => window.print()}><Printer /> Print</Button>

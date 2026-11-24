@@ -34,7 +34,7 @@ export default async function PipelinePage() {
   return (
     <>
       <PageHeader title="Sales pipeline" description="Track deal value from first discussion to signature. Drag deals between stages — every move is logged." breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Sales pipeline" }]} actions={add} />
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard label="Open pipeline" value={formatINR(sum(open))} hint={`${open.length} open deals`} />
         <StatCard label="Weighted forecast" value={formatINR(open.reduce((a, o) => a + Number(o.value) * ({ new: 0.1, discussion: 0.25, quotation_sent: 0.5, negotiation: 0.75 }[o.stage as "new"] ?? 0), 0))} hint="10/25/50/75% by stage" />
         <StatCard label="Won" value={formatINR(sum(won))} hint={`${won.length} deals`} tone="success" />

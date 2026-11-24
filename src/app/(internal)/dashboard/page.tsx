@@ -6,6 +6,7 @@ import { can } from "@/lib/auth/permissions";
 import { LEAD_STATUS, PROJECT_STATUS, PRIORITY } from "@/lib/constants";
 import { daysUntil, formatDate, formatINR, formatRelative, todayISO } from "@/lib/format";
 import { firstName } from "@/lib/format";
+import { ContactActions } from "@/components/app/contact-actions";
 import { PageHeader } from "@/components/app/page-header";
 import { Panel, StatCard } from "@/components/app/panel";
 import { EmptyState } from "@/components/app/empty-state";
@@ -34,7 +35,33 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
       {sp.denied && <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">You don&apos;t have access to that page with your current role.</p>}
       <PageHeader title={`Good ${hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening"}, ${firstName(s.fullName)}`} description={s.role === "team_member" ? "Your projects, deadlines and tasks at a glance." : `Live overview of ${s.orgName} — every figure is calculated from current records.`} />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="Today" className="mb-6 rounded-xl border bg-card">
+        <header className="flex items-center justify-between gap-3 border-b px-4 py-3 sm:px-5">
+          <h2 className="text-sm font-semibold">Today</h2>
+          <span className="text-xs text-muted-foreground">{d.followUps.length + d.tasksToday.length ? `${d.followUps.length} follow-up${d.followUps.length === 1 ? "" : "s"} · ${d.tasksToday.length} task${d.tasksToday.length === 1 ? "" : "s"} due` : "All clear"}</span>
+        </header>
+        {d.followUps.length + d.tasksToday.length === 0 ? <p className="flex items-center gap-2 p-4 text-sm text-muted-foreground sm:px-5"><CheckCircle2 className="size-4 text-emerald-500" /> Nothing due today. Use + to plan the next step.</p> : (
+          <div className="grid grid-cols-1 md:grid-cols-2 md:divide-x">
+            <ul className="min-w-0 divide-y">
+              {d.followUps.map((l) => (
+                <li key={l.id} className="flex items-center gap-3 px-4 py-3 sm:px-5">
+                  <Link href={`/leads/${l.id}`} className="min-w-0 flex-1"><span className="block truncate text-sm font-medium hover:text-primary">{l.company_name}</span><span className={cn("block truncate text-xs", l.next_follow_up < todayISO() ? "text-destructive" : "text-muted-foreground")}>Follow up{l.contact_person ? ` with ${l.contact_person}` : ""} · {l.next_follow_up < todayISO() ? `since ${formatDate(l.next_follow_up, "dd MMM")}` : "today"}</span></Link>
+                  <ContactActions phone={l.phone} email={l.email} name={l.contact_person ?? l.company_name} />
+                </li>
+              ))}
+              {d.followUps.length === 0 && <li className="px-4 py-3 text-sm text-muted-foreground sm:px-5">No follow-ups due.</li>}
+            </ul>
+            <ul className="min-w-0 divide-y border-t md:border-t-0">
+              {d.tasksToday.map((t) => (
+                <li key={t.id}><Link href={`/tasks/${t.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 sm:px-5"><span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{t.title}</span><span className="block truncate text-xs text-muted-foreground">{t.project?.name}</span></span><span className={cn("shrink-0 text-xs", t.due_date < todayISO() ? "font-medium text-destructive" : "text-muted-foreground")}>{t.due_date < todayISO() ? `Due ${formatDate(t.due_date, "dd MMM")}` : "Today"}</span></Link></li>
+              ))}
+              {d.tasksToday.length === 0 && <li className="px-4 py-3 text-sm text-muted-foreground sm:px-5">No tasks due today.</li>}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {sales && <StatCard label="Total leads" value={t.leads} hint={`${t.openLeads} open`} icon={Target} href="/leads" />}
         <StatCard label="Clients" value={t.clients} icon={Building2} href="/clients" />
         <StatCard label="Active projects" value={t.activeProjects} hint={t.overdueProjects ? `${t.overdueProjects} past delivery date` : "On schedule"} icon={FolderKanban} tone={t.overdueProjects ? "warning" : "default"} href="/projects?status=active" />
@@ -48,7 +75,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         <StatCard label="Upcoming deadlines (14d)" value={d.upcomingProjects.length + d.upcomingTasks.length} icon={Clock} />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-3">
         {finance && <Panel title="Monthly revenue" description="Payments received, last 12 months" className="xl:col-span-2"><RevenueChart data={d.monthly} /></Panel>}
         <Panel title="Project status" description="All projects by current status" className={finance ? "" : "xl:col-span-2"}>
           {projectStatus.length ? <StageBars data={projectStatus} label="Projects by status" /> : <EmptyState icon={FolderKanban} title="No projects yet" />}

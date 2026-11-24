@@ -28,7 +28,7 @@ function Card({ lines = 5, className }: { lines?: number; className?: string }) 
   return <div className={cn("space-y-4 rounded-xl border bg-card p-5", className)}><B className="h-4 w-32" />{times(lines).map((i) => <B key={i} className={cn("h-3.5", i % 3 === 2 ? "w-1/2" : "w-full")} />)}</div>;
 }
 function Stats({ n = 4 }: { n?: number }) {
-  return <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{times(n).map((i) => <div key={i} className="space-y-3 rounded-xl border bg-card p-4"><B className="h-3 w-24" /><B className="h-7 w-28" /></div>)}</div>;
+  return <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">{times(n).map((i) => <div key={i} className="space-y-3 rounded-xl border bg-card p-4"><B className="h-3 w-24" /><B className="h-7 w-28" /></div>)}</div>;
 }
 
 /** Shown the moment a link is clicked, while the server loads the page's data. */

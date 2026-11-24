@@ -63,12 +63,12 @@ export function AgreementsTable({ rows, clients, projects, canManage, showClient
         {rows.map((a) => (
           <TableRow key={a.id}>
             <TableCell className="pl-4"><p className="font-medium">{a.title}</p>{a.project && <p className="text-xs text-muted-foreground">{a.project.name}</p>}</TableCell>
-            {showClient && <TableCell>{a.client?.company_name}</TableCell>}
-            <TableCell className="space-x-1"><StatusBadge def={AGREEMENT_STATUS} value={a.status} />{a.client_visible && a.status !== "draft" && <Pill tone="teal">Shared</Pill>}</TableCell>
-            <TableCell className="text-sm">{formatDate(a.signed_date)}</TableCell>
-            <TableCell className="text-xs text-muted-foreground">{a.start_date || a.end_date ? `${formatDate(a.start_date)} → ${formatDate(a.end_date)}` : "—"}</TableCell>
-            <TableCell>{a.file ? <a href={`/api/files/${a.file.id}`} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">{a.file.name}</a> : <span className="text-xs text-muted-foreground">Not uploaded</span>}</TableCell>
-            <TableCell className="pr-4">
+            {showClient && <TableCell label="Client">{a.client?.company_name}</TableCell>}
+            <TableCell label="Status" className="space-x-1"><StatusBadge def={AGREEMENT_STATUS} value={a.status} />{a.client_visible && a.status !== "draft" && <Pill tone="teal">Shared</Pill>}</TableCell>
+            <TableCell label="Signed" className="text-sm">{formatDate(a.signed_date)}</TableCell>
+            <TableCell label="Term" className="text-xs text-muted-foreground">{a.start_date || a.end_date ? `${formatDate(a.start_date)} → ${formatDate(a.end_date)}` : "—"}</TableCell>
+            <TableCell label="Document">{a.file ? <a href={`/api/files/${a.file.id}`} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">{a.file.name}</a> : <span className="text-xs text-muted-foreground">Not uploaded</span>}</TableCell>
+            <TableCell actions className="pr-4">
               {canManage && (
                 <RowActions editAs="dialog" editTitle="Edit agreement" edit={saveAgreement.bind(null, a.id) as FormAction} editForm={<AgreementFields a={a} clients={clients} projects={projects} />}
                   onDelete={() => deleteAgreement(a.id)} deleteTitle={`Delete “${a.title}”?`} deleteDescription="The agreement record will be removed. The uploaded document stays in Files." />

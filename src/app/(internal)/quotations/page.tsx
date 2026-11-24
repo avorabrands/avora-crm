@@ -28,14 +28,14 @@ export default async function QuotationsPage({ searchParams }: PageProps<"/quota
   return (
     <>
       <PageHeader title="Quotations" description="Professional GST quotations with configurable tax slabs. Accepted quotations convert to invoices in one click." breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Quotations" }]} actions={add} />
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard label="Pending (sent/viewed)" value={formatINR(sum(["sent", "viewed"]))} hint={`${n(["sent", "viewed"])} quotations`} />
         <StatCard label="Drafts" value={n(["draft"])} />
         <StatCard label="Accepted value" value={formatINR(sum(["accepted"]))} tone="success" />
         <StatCard label="Acceptance rate" value={decided ? `${Math.round((n(["accepted"]) / decided) * 100)}%` : "—"} hint="Accepted ÷ decided" />
       </div>
       <Panel bodyClassName="p-0">
-        <TableToolbar placeholder="Search number or title…" filters={[{ name: "status", label: "Status", options: QUOTATION_STATUS.options }, { name: "client", label: "Client", options: clients }]} />
+        <TableToolbar sorts={[{ value: "issue_date:desc", label: "Newest first" }, { value: "total:desc", label: "Highest value" }, { value: "status:asc", label: "Status" }]} placeholder="Search number or title…" filters={[{ name: "status", label: "Status", options: QUOTATION_STATUS.options }, { name: "client", label: "Client", options: clients }]} />
         {rows.length ? <><QuotationsTable rows={rows} /><Pagination total={total} pageSize={params.pageSize} /></> : <EmptyState icon={FileText} title="No quotations" description="Create your first quotation." action={add} />}
       </Panel>
     </>

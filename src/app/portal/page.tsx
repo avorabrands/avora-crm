@@ -35,7 +35,7 @@ export default async function PortalHome() {
         <h1 className="text-2xl font-semibold">{firstName(s.fullName)} · {me?.company_name}</h1>
         <p className="mt-1 text-sm text-sidebar-foreground">Track your projects, review designs and manage billing with Avora Brands.</p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard label="Active projects" value={active.length} icon={FolderKanban} href="/portal/projects" />
         <StatCard label="Awaiting your approval" value={pending.length} icon={ThumbsUp} tone={pending.length ? "warning" : "default"} href="/portal/approvals" />
         <StatCard label="Pending invoices" value={(invoices ?? []).length} hint={formatINR(outstanding)} icon={Receipt} href="/portal/invoices" />

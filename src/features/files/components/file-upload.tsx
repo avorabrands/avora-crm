@@ -12,7 +12,7 @@ export function FileUploadDialog({ projectId, clientId, taskId, projects, defaul
   projectId?: string; clientId?: string; taskId?: string; projects?: Option[]; defaultFolder?: string; allowShare?: boolean; label?: string;
 }) {
   return (
-    <FormDialog trigger={<Button><Upload /> {label}</Button>} title="Upload files" description="Files are stored in a private bucket. Only people with access to the project can open them." action={uploadFiles} submitLabel="Upload">
+    <FormDialog openKey={projectId || clientId ? undefined : "file"} trigger={<Button><Upload /> {label}</Button>} title="Upload files" description="Files are stored in a private bucket. Only people with access to the project can open them." action={uploadFiles} submitLabel="Upload">
       {projectId && <input type="hidden" name="project_id" value={projectId} />}
       {clientId && <input type="hidden" name="client_id" value={clientId} />}
       {taskId && <input type="hidden" name="task_id" value={taskId} />}

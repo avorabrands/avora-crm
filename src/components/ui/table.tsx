@@ -11,7 +11,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
     >
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
+        className={cn("stack w-full caption-bottom text-sm", className)}
         {...props}
       />
     </div>
@@ -77,10 +77,13 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   )
 }
 
-function TableCell({ className, ...props }: React.ComponentProps<"td">) {
+/** `label` names the cell on phones (where rows become cards); `actions` marks the row's buttons. */
+function TableCell({ className, label, actions, ...props }: React.ComponentProps<"td"> & { label?: string; actions?: boolean }) {
   return (
     <td
       data-slot="table-cell"
+      data-label={label}
+      data-actions={actions || undefined}
       className={cn(
         "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0",
         className

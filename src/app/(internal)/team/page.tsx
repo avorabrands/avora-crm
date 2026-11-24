@@ -58,16 +58,16 @@ export default async function TeamPage() {
                 return (
                   <TableRow key={m.id}>
                     <TableCell className="pl-4"><PersonCell name={m.profile?.full_name} sub={[m.employee_code, m.profile?.email].filter(Boolean).join(" · ")} /></TableCell>
-                    <TableCell><StatusBadge def={ROLES} value={m.role} /></TableCell>
-                    <TableCell className="text-sm">{m.department ?? "—"}<p className="text-xs text-muted-foreground">{m.designation}</p></TableCell>
-                    <TableCell className="text-sm">{formatDate(m.joining_date)}</TableCell>
-                    <TableCell className="text-center tabular-nums">{st.projects}</TableCell>
-                    <TableCell className="text-center tabular-nums">{st.open}</TableCell>
-                    <TableCell className="text-center tabular-nums">{st.overdue ? <Pill tone="red">{st.overdue}</Pill> : 0}</TableCell>
-                    <TableCell className="text-center tabular-nums">{st.done30}</TableCell>
-                    <TableCell className="text-center tabular-nums">{st.activity}</TableCell>
-                    <TableCell><Pill tone={m.status === "active" ? "green" : "slate"}>{m.status}</Pill></TableCell>
-                    {admin && <TableCell className="pr-4"><EditMember m={m} action={updateTeamMember.bind(null, m.id)} /></TableCell>}
+                    <TableCell label="Role"><StatusBadge def={ROLES} value={m.role} /></TableCell>
+                    <TableCell label="Department" className="text-sm">{m.department ?? "—"}<p className="text-xs text-muted-foreground">{m.designation}</p></TableCell>
+                    <TableCell label="Joined" className="text-sm">{formatDate(m.joining_date)}</TableCell>
+                    <TableCell label="Projects" className="text-center tabular-nums">{st.projects}</TableCell>
+                    <TableCell label="Open tasks" className="text-center tabular-nums">{st.open}</TableCell>
+                    <TableCell label="Overdue" className="text-center tabular-nums">{st.overdue ? <Pill tone="red">{st.overdue}</Pill> : 0}</TableCell>
+                    <TableCell label="Done (30 days)" className="text-center tabular-nums">{st.done30}</TableCell>
+                    <TableCell label="Activity (30 days)" className="text-center tabular-nums">{st.activity}</TableCell>
+                    <TableCell label="Status"><Pill tone={m.status === "active" ? "green" : "slate"}>{m.status}</Pill></TableCell>
+                    {admin && <TableCell actions className="pr-4"><EditMember m={m} action={updateTeamMember.bind(null, m.id)} /></TableCell>}
                   </TableRow>
                 );
               })}

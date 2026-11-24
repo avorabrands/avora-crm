@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -12,6 +12,14 @@ const inter = Inter({ variable: "--font-sans", subsets: ["latin"] });
 export const metadata: Metadata = {
   title: { default: "Avora Brands", template: "%s · Avora Brands" },
   description: "One Workspace. Every Client. Every Project.",
+  appleWebApp: { capable: true, title: "Avora", statusBarStyle: "default" },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [{ media: "(prefers-color-scheme: light)", color: "#f7f8fc" }, { media: "(prefers-color-scheme: dark)", color: "#0b0f19" }],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

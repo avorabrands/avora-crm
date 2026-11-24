@@ -33,7 +33,7 @@ export default async function LeadsPage({ searchParams }: PageProps<"/leads">) {
   const canManage = can(session.role, "leads.manage");
 
   const newLead = canManage ? (
-    <FormSheet trigger={<Button><Plus /> Add lead</Button>} title="New lead" description="Capture an enquiry. You can convert it to a client once won." action={createLead}>
+    <FormSheet openKey="lead" trigger={<Button><Plus /> Add lead</Button>} title="New lead" description="Capture an enquiry. You can convert it to a client once won." action={createLead}>
       <LeadFields staff={staff} />
     </FormSheet>
   ) : null;
@@ -50,8 +50,7 @@ export default async function LeadsPage({ searchParams }: PageProps<"/leads">) {
         </>}
       />
       <Panel bodyClassName="p-0">
-        <TableToolbar
-          placeholder="Search company, contact, phone, email…"
+        <TableToolbar sorts={[{ value: "created_at:desc", label: "Newest first" }, { value: "next_follow_up:asc", label: "Follow-up soonest" }, { value: "estimated_budget:desc", label: "Highest budget" }, { value: "company_name:asc", label: "Company A–Z" }]}           placeholder="Search company, contact, phone, email…"
           filters={[
             ...(board ? [] : [{ name: "status", label: "Status", options: LEAD_STATUS.options }]),
             { name: "source", label: "Source", options: LEAD_SOURCES.map((s) => ({ value: s, label: s })) },
@@ -85,16 +84,16 @@ export default async function LeadsPage({ searchParams }: PageProps<"/leads">) {
                       <Link href={`/leads/${l.id}`} className="font-medium hover:text-primary">{l.company_name}</Link>
                       <p className="text-xs text-muted-foreground">{l.code}{l.source ? ` · ${l.source}` : ""}</p>
                     </TableCell>
-                    <TableCell>
+                    <TableCell label="Contact">
                       <p>{l.contact_person ?? "—"}</p>
                       <p className="text-xs text-muted-foreground">{l.phone ?? l.email ?? ""}</p>
                     </TableCell>
-                    <TableCell className="max-w-48"><p className="truncate text-xs text-muted-foreground">{l.services.join(", ") || "—"}</p></TableCell>
-                    <TableCell className="tabular-nums">{l.estimated_budget ? formatINR(l.estimated_budget) : "—"}</TableCell>
-                    <TableCell><StatusBadge def={LEAD_STATUS} value={l.status} /></TableCell>
-                    <TableCell><PersonCell name={l.assignee?.full_name} /></TableCell>
-                    <TableCell className={cn("text-sm", l.next_follow_up && l.next_follow_up <= todayISO() && !["won", "lost"].includes(l.status) && "font-medium text-destructive")}>{formatDate(l.next_follow_up)}</TableCell>
-                    <TableCell className="pr-4"><LeadRowActions lead={l} staff={staff} update={updateLead.bind(null, l.id)} canDelete={can(session.role, "leads.delete")} /></TableCell>
+                    <TableCell label="Services" className="m-hide max-w-48"><p className="truncate text-xs text-muted-foreground">{l.services.join(", ") || "—"}</p></TableCell>
+                    <TableCell label="Budget" className="tabular-nums">{l.estimated_budget ? formatINR(l.estimated_budget) : "—"}</TableCell>
+                    <TableCell label="Status"><StatusBadge def={LEAD_STATUS} value={l.status} /></TableCell>
+                    <TableCell label="Owner" className="m-hide"><PersonCell name={l.assignee?.full_name} /></TableCell>
+                    <TableCell label="Follow-up" className={cn("text-sm", l.next_follow_up && l.next_follow_up <= todayISO() && !["won", "lost"].includes(l.status) && "font-medium text-destructive")}>{formatDate(l.next_follow_up)}</TableCell>
+                    <TableCell actions className="pr-4"><LeadRowActions lead={l} staff={staff} update={updateLead.bind(null, l.id)} canDelete={can(session.role, "leads.delete")} /></TableCell>
                   </TableRow>
                 ))}
               </TableBody>

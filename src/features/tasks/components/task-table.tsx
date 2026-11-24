@@ -29,11 +29,11 @@ export function TaskTable({ rows, canApprove, showProject = true }: { rows: Task
           return (
             <TableRow key={t.id}>
               <TableCell className="max-w-80 pl-4"><Link href={`/tasks/${t.id}`} className="font-medium hover:text-primary">{t.title}</Link>{t.deliverable && <p className="truncate text-xs text-muted-foreground">{t.deliverable.name}</p>}</TableCell>
-              {showProject && <TableCell className="text-sm">{t.project ? <Link href={`/projects/${t.project_id}?tab=tasks`} className="hover:text-primary">{t.project.name}</Link> : "—"}</TableCell>}
-              <TableCell><PersonCell name={t.assignee?.full_name} /></TableCell>
-              <TableCell><StatusBadge def={PRIORITY} value={t.priority} /></TableCell>
-              <TableCell>{locked ? <StatusBadge def={TASK_STATUS} value={t.status} /> : <StatusSelect value={t.status} options={options} onChange={setTaskStatus.bind(null, t.id)} />}</TableCell>
-              <TableCell className={cn("pr-4 text-sm", overdue && "font-medium text-destructive")}>{formatDate(t.due_date)}{overdue && <span className="block text-xs">Overdue</span>}</TableCell>
+              {showProject && <TableCell label="Project" className="text-sm">{t.project ? <Link href={`/projects/${t.project_id}?tab=tasks`} className="hover:text-primary">{t.project.name}</Link> : "—"}</TableCell>}
+              <TableCell label="Assignee"><PersonCell name={t.assignee?.full_name} /></TableCell>
+              <TableCell label="Priority"><StatusBadge def={PRIORITY} value={t.priority} /></TableCell>
+              <TableCell label="Status">{locked ? <StatusBadge def={TASK_STATUS} value={t.status} /> : <StatusSelect value={t.status} options={options} onChange={setTaskStatus.bind(null, t.id)} />}</TableCell>
+              <TableCell label="Due" className={cn("pr-4 text-sm", overdue && "font-medium text-destructive")}>{formatDate(t.due_date)}{overdue && <span className="block text-xs">Overdue</span>}</TableCell>
             </TableRow>
           );
         })}

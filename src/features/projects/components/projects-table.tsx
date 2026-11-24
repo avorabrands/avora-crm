@@ -47,13 +47,13 @@ export function ProjectsTable({ rows, showClient = true, sortable = true }: { ro
                 <Link href={`/projects/${p.id}`} className="font-medium hover:text-primary">{p.name}</Link>
                 <p className="text-xs text-muted-foreground">{p.code}</p>
               </TableCell>
-              {showClient && <TableCell>{p.client ? <Link href={`/clients/${p.client_id}`} className="hover:text-primary">{p.client.company_name}</Link> : "—"}</TableCell>}
-              <TableCell className="text-xs text-muted-foreground">{PROJECT_CATEGORY.label[p.category as keyof typeof PROJECT_CATEGORY.label]}</TableCell>
-              <TableCell><StatusBadge def={PROJECT_STATUS} value={p.status} /></TableCell>
-              <TableCell><StatusBadge def={PRIORITY} value={p.priority} /></TableCell>
-              <TableCell><ProgressBar value={p.progress} /></TableCell>
-              <TableCell><PersonCell name={p.manager?.full_name} /></TableCell>
-              <TableCell className={cn("pr-4 text-sm", overdue && "font-medium text-destructive")}>{formatDate(p.due_date)}{overdue && <span className="block text-xs">Overdue</span>}</TableCell>
+              {showClient && <TableCell label="Client">{p.client ? <Link href={`/clients/${p.client_id}`} className="hover:text-primary">{p.client.company_name}</Link> : "—"}</TableCell>}
+              <TableCell label="Category" className="text-xs text-muted-foreground">{PROJECT_CATEGORY.label[p.category as keyof typeof PROJECT_CATEGORY.label]}</TableCell>
+              <TableCell label="Status"><StatusBadge def={PROJECT_STATUS} value={p.status} /></TableCell>
+              <TableCell label="Priority"><StatusBadge def={PRIORITY} value={p.priority} /></TableCell>
+              <TableCell label="Progress"><ProgressBar value={p.progress} /></TableCell>
+              <TableCell label="Manager"><PersonCell name={p.manager?.full_name} /></TableCell>
+              <TableCell label="Delivery" className={cn("pr-4 text-sm", overdue && "font-medium text-destructive")}>{formatDate(p.due_date)}{overdue && <span className="block text-xs">Overdue</span>}</TableCell>
             </TableRow>
           );
         })}

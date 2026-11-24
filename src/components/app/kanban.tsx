@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { DndContext, DragOverlay, PointerSensor, KeyboardSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
+import { DndContext, DragOverlay, MouseSensor, TouchSensor, KeyboardSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -29,7 +29,7 @@ export function KanbanBoard<T extends { id: string }>({ columns, items, columnOf
   const [activeId, setActiveId] = useState<string | null>(null);
   const [, start] = useTransition();
   const router = useRouter();
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor));
+  const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }), useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }), useSensor(KeyboardSensor));
 
 
   const grouped = useMemo(() => {
@@ -43,10 +43,12 @@ export function KanbanBoard<T extends { id: string }>({ columns, items, columnOf
   const onDragStart = (e: DragStartEvent) => setActiveId(String(e.active.id));
   const onDragEnd = (e: DragEndEvent) => {
     setActiveId(null);
-    const id = String(e.active.id);
-    const to = e.over ? String(e.over.id) : null;
+    if (e.over) move(String(e.active.id), String(e.over.id));
+  };
+
+  function move(id: string, to: string) {
     const item = items.find((i) => i.id === id);
-    if (!item || !to) return;
+    if (!item) return;
     const from = local[id] ?? columnOf(item);
     if (from === to) return;
     const blocked = canMove?.(item, to);
@@ -62,15 +64,24 @@ export function KanbanBoard<T extends { id: string }>({ columns, items, columnOf
         router.refresh();
       }
     });
-  };
+  }
 
   return (
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setActiveId(null)}>
-      <div className="flex gap-3 overflow-x-auto pb-3">
+      <p className="mb-2 text-xs text-muted-foreground lg:hidden">Swipe between stages. Use “Move to” or hold a card to drag it.</p>
+      <div className="relative -mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-3 px-3 pb-3 md:mx-0 md:snap-none md:px-0">
         {columns.map((col) => (
           <Column key={col.id} col={col} count={grouped[col.id]?.length ?? 0} summary={columnSummary?.(grouped[col.id] ?? [])}>
             {(grouped[col.id] ?? []).map((it) => (
-              <Card key={it.id} id={it.id} hidden={activeId === it.id}>{renderCard(it)}</Card>
+              <Card key={it.id} id={it.id} hidden={activeId === it.id}>
+                {renderCard(it)}
+                <label className="mt-3 block lg:hidden" onPointerDown={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                  <span className="sr-only">Move to another stage</span>
+                  <select className="field-select" value={col.id} onChange={(e) => move(it.id, e.target.value)}>
+                    {columns.map((c) => <option key={c.id} value={c.id}>{c.id === col.id ? `In: ${c.title}` : `Move to: ${c.title}`}</option>)}
+                  </select>
+                </label>
+              </Card>
             ))}
           </Column>
         ))}
@@ -83,7 +94,7 @@ export function KanbanBoard<T extends { id: string }>({ columns, items, columnOf
 function Column({ col, count, summary, children }: { col: KanbanColumn; count: number; summary?: React.ReactNode; children: React.ReactNode }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.id });
   return (
-    <div ref={setNodeRef} className={cn("flex w-72 shrink-0 flex-col rounded-xl border bg-muted/50 transition-colors", isOver && "border-primary/50 bg-accent/60")}>
+    <div ref={setNodeRef} className={cn("flex w-[82vw] max-w-80 shrink-0 snap-start flex-col md:w-72 md:max-w-none rounded-xl border bg-muted/50 transition-colors", isOver && "border-primary/50 bg-accent/60")}>
       <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-2">
         <div className="flex items-center gap-2">
           <span className={cn("size-2 rounded-full bg-muted-foreground/40", col.accent)} />
@@ -105,7 +116,7 @@ function Card({ id, hidden, children }: { id: string; hidden?: boolean; children
       style={{ transform: CSS.Translate.toString(transform) }}
       {...listeners}
       {...attributes}
-      className={cn("cursor-grab touch-none rounded-lg border bg-card p-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)] hover:border-primary/40 active:cursor-grabbing", hidden && "opacity-30")}
+      className={cn("relative cursor-grab touch-manipulation rounded-lg select-none border bg-card p-3 shadow-[0_1px_2px_rgba(16,24,40,0.05)] hover:border-primary/40 active:cursor-grabbing", hidden && "opacity-30")}
     >
       {children}
     </div>

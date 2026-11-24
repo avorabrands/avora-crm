@@ -8,7 +8,7 @@ export function Panel({ title, description, action, children, className, bodyCla
   return (
     <section className={cn("rounded-xl border bg-card text-card-foreground shadow-[0_1px_2px_rgba(16,24,40,0.04)]", className)}>
       {(title || action) && (
-        <header className="flex items-start justify-between gap-3 border-b px-5 py-3.5">
+        <header className="flex items-start justify-between flex-wrap gap-3 border-b px-4 py-3.5 sm:flex-nowrap sm:px-5">
           <div className="min-w-0">
             {title && <h2 className="text-sm font-semibold">{title}</h2>}
             {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
@@ -16,7 +16,7 @@ export function Panel({ title, description, action, children, className, bodyCla
           {action}
         </header>
       )}
-      <div className={cn(title || action ? "p-5" : "p-5", bodyClassName)}>{children}</div>
+      <div className={bodyClassName ?? "p-4 sm:p-5"}>{children}</div>
     </section>
   );
 }
@@ -29,19 +29,19 @@ export function StatCard({ label, value, hint, icon: Icon, tone = "default", hre
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0 space-y-1">
         <p className="text-xs font-medium text-muted-foreground">{label}</p>
-        <p className="truncate text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
+        <p className="truncate text-lg font-semibold tracking-tight tabular-nums sm:text-2xl">{value}</p>
         {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
       </div>
-      {Icon && <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", toneCls)}><Icon className="size-4" /></div>}
+      {Icon && <div className={cn("hidden size-9 shrink-0 items-center justify-center rounded-lg sm:flex", toneCls)}><Icon className="size-4" /></div>}
     </div>
   );
-  const cls = "block rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]";
+  const cls = "block min-w-0 rounded-xl border bg-card p-3.5 sm:p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]";
   return href ? <Link href={href} className={cn(cls, "transition-colors hover:border-primary/40")}>{body}</Link> : <div className={cls}>{body}</div>;
 }
 
 export function DescriptionList({ items, columns = 2 }: { items: { label: string; value: React.ReactNode }[]; columns?: 1 | 2 | 3 }) {
   return (
-    <dl className={cn("grid gap-x-6 gap-y-4", columns === 1 ? "grid-cols-1" : columns === 2 ? "sm:grid-cols-2" : "sm:grid-cols-3")}>
+    <dl className={cn("grid gap-x-6 gap-y-4", columns === 1 ? "grid-cols-1" : columns === 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3")}>
       {items.map((it) => (
         <div key={it.label} className="min-w-0">
           <dt className="text-xs text-muted-foreground">{it.label}</dt>

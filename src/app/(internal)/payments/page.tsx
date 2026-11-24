@@ -30,14 +30,14 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/payment
   return (
     <>
       <PageHeader title="Payments" description="Manual payment records — advances, milestones, partial and final payments. Each one gets a printable receipt." breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Payments" }]} actions={record} />
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard label="Total received" value={formatINR(sum(() => true))} tone="success" />
         <StatCard label="This month" value={formatINR(sum((p) => p.payment_date >= monthStart))} />
         <StatCard label="Advances" value={formatINR(sum((p) => p.payment_type === "advance"))} />
         <StatCard label="Open invoices" value={invoices.length} hint={formatINR(invoices.reduce((a, i) => a + i.balance, 0)) + " outstanding"} tone="warning" href="/invoices?status=outstanding" />
       </div>
       <Panel bodyClassName="p-0">
-        <TableToolbar placeholder="Search receipt, UTR, reference…" filters={[{ name: "client", label: "Client", options: clients }, { name: "method", label: "Method", options: PAYMENT_METHOD.options }, { name: "type", label: "Type", options: PAYMENT_TYPE.options }]} />
+        <TableToolbar sorts={[{ value: "payment_date:desc", label: "Newest first" }, { value: "amount:desc", label: "Largest amount" }]} placeholder="Search receipt, UTR, reference…" filters={[{ name: "client", label: "Client", options: clients }, { name: "method", label: "Method", options: PAYMENT_METHOD.options }, { name: "type", label: "Type", options: PAYMENT_TYPE.options }]} />
         {rows.length ? <><PaymentsTable rows={rows} actions={can(s.role, "finance.delete") ? (p) => <RowActions onDelete={deletePayment.bind(null, p.id)} deleteTitle={`Delete ${p.receipt_number}?`} deleteDescription="The linked invoice balance will be recalculated. This cannot be undone." /> : undefined} /><Pagination total={total} pageSize={params.pageSize} /></> : <EmptyState icon={Wallet} title="No payments recorded" action={record} />}
       </Panel>
     </>

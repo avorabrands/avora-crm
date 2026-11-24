@@ -24,10 +24,10 @@ export default async function PortalPayments() {
             <TableBody>{rows.map((p) => (
               <TableRow key={p.id}>
                 <TableCell className="pl-4"><Link href={`/print/receipt/${p.id}`} className="font-medium hover:text-primary">{p.receipt_number}</Link></TableCell>
-                <TableCell className="text-sm">{formatDate(p.payment_date)}</TableCell><TableCell className="text-sm">{p.invoice?.number ?? "Advance"}</TableCell>
-                <TableCell className="text-sm">{PAYMENT_METHOD.label[p.method as keyof typeof PAYMENT_METHOD.label]}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{p.transaction_id ?? p.reference_number ?? "—"}</TableCell>
-                <TableCell className="pr-4 text-right font-medium tabular-nums">{formatINR(p.amount)}</TableCell>
+                <TableCell label="Date" className="text-sm">{formatDate(p.payment_date)}</TableCell><TableCell label="Invoice" className="text-sm">{p.invoice?.number ?? "Advance"}</TableCell>
+                <TableCell label="Method" className="text-sm">{PAYMENT_METHOD.label[p.method as keyof typeof PAYMENT_METHOD.label]}</TableCell>
+                <TableCell label="Reference" className="text-xs text-muted-foreground">{p.transaction_id ?? p.reference_number ?? "—"}</TableCell>
+                <TableCell label="Amount" className="pr-4 text-right font-medium tabular-nums">{formatINR(p.amount)}</TableCell>
               </TableRow>
             ))}</TableBody>
           </Table>

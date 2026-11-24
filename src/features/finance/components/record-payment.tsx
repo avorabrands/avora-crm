@@ -17,7 +17,7 @@ export function RecordPaymentButton({ invoices, clients, fixedInvoice, label = "
   const [inv, setInv] = useState(fixedInvoice?.value ?? "");
   const selected = fixedInvoice ?? invoices.find((i) => i.value === inv);
   return (
-    <FormDialog trigger={<Button variant={variant}><Plus /> {label}</Button>} title="Record payment" description="Payments are recorded manually. Invoice balances and status update automatically." action={recordPayment} submitLabel="Record payment">
+    <FormDialog openKey={fixedInvoice ? undefined : "payment"} trigger={<Button variant={variant}><Plus /> {label}</Button>} title="Record payment" description="Payments are recorded manually. Invoice balances and status update automatically." action={recordPayment} submitLabel="Record payment">
       {fixedInvoice ? <input type="hidden" name="invoice_id" value={fixedInvoice.value} /> : (
         <Field name="invoice_id" label="Invoice" hint="Leave empty to record an advance on account">
           <NativeSelect name="invoice_id" value={inv} onChange={(e) => setInv(e.target.value)}>

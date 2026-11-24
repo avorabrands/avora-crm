@@ -1,5 +1,6 @@
 "use client";
 
+import { ContactActions } from "@/components/app/contact-actions";
 import { RowActions } from "@/components/app/row-actions";
 import type { FormAction } from "@/components/app/form";
 import type { Option } from "@/features/common/lookups";
@@ -16,6 +17,8 @@ export function LeadRowActions({ lead, staff, update, canDelete }: { lead: LeadR
       deleteTitle={`Delete ${lead.company_name}?`}
       deleteDescription="The lead and its follow-up history will be permanently removed. This cannot be undone."
       onDelete={canDelete ? () => deleteLead(lead.id) : undefined}
-    />
+    >
+      <ContactActions phone={lead.phone} email={lead.email} name={lead.contact_person ?? lead.company_name} className="lg:hidden" />
+    </RowActions>
   );
 }

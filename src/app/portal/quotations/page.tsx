@@ -24,8 +24,8 @@ export default async function PortalQuotations() {
             <TableBody>{(data ?? []).map((q) => (
               <TableRow key={q.id}>
                 <TableCell className="pl-4"><Link href={`/portal/quotations/${q.id}`} className="font-medium hover:text-primary">{q.number}</Link><p className="text-xs text-muted-foreground">{q.title}</p></TableCell>
-                <TableCell className="text-sm">{formatDate(q.issue_date)}</TableCell><TableCell className="text-sm">{formatDate(q.valid_until)}</TableCell>
-                <TableCell><StatusBadge def={QUOTATION_STATUS} value={q.status} /></TableCell><TableCell className="pr-4 text-right font-medium tabular-nums">{formatINR(q.total)}</TableCell>
+                <TableCell label="Date" className="text-sm">{formatDate(q.issue_date)}</TableCell><TableCell label="Valid until" className="text-sm">{formatDate(q.valid_until)}</TableCell>
+                <TableCell label="Status"><StatusBadge def={QUOTATION_STATUS} value={q.status} /></TableCell><TableCell label="Total" className="pr-4 text-right font-medium tabular-nums">{formatINR(q.total)}</TableCell>
               </TableRow>
             ))}</TableBody>
           </Table>

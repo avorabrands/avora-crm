@@ -7,6 +7,7 @@ import { can } from "@/lib/auth/permissions";
 import { LEAD_STATUS } from "@/lib/constants";
 import { formatDate, formatDateTime, formatINR } from "@/lib/format";
 import { PageHeader } from "@/components/app/page-header";
+import { ContactActions } from "@/components/app/contact-actions";
 import { DescriptionList, Panel } from "@/components/app/panel";
 import { StatusBadge, Pill } from "@/components/app/status-badge";
 import { PersonCell } from "@/components/app/user-avatar";
@@ -41,6 +42,7 @@ export default async function LeadDetailPage({ params }: PageProps<"/leads/[id]"
       <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
         <div className="space-y-6">
           <Panel title="Lead details">
+            <ContactActions labels phone={lead.phone} email={lead.email} name={lead.contact_person ?? lead.company_name} className="mb-5" />
             <DescriptionList items={[
               { label: "Contact person", value: lead.contact_person },
               { label: "Phone", value: lead.phone && <a href={`tel:${lead.phone}`} className="hover:text-primary">{lead.phone}</a> },

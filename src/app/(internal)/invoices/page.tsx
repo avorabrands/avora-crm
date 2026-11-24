@@ -29,14 +29,14 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/invoice
   return (
     <>
       <PageHeader title="Invoices" description="GST invoices with automatic balances. Overdue is calculated from the due date." breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Invoices" }]} actions={add} />
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard label="Total invoiced" value={formatINR(invoiced)} href="/invoices" />
         <StatCard label="Received" value={formatINR(received)} tone="success" href="/payments" />
         <StatCard label="Outstanding" value={formatINR(invoiced - received)} tone="warning" href="/invoices?status=outstanding" />
         <StatCard label="Overdue" value={formatINR(overdue)} tone={overdue > 0 ? "danger" : "default"} href="/invoices?status=overdue" />
       </div>
       <Panel bodyClassName="p-0">
-        <TableToolbar placeholder="Search invoice number…" filters={[{ name: "status", label: "Status", options: [{ value: "outstanding", label: "Outstanding" }, ...INVOICE_STATUS.options] }, { name: "client", label: "Client", options: clients }]} />
+        <TableToolbar sorts={[{ value: "invoice_date:desc", label: "Newest first" }, { value: "due_date:asc", label: "Due soonest" }, { value: "balance_due:desc", label: "Largest balance" }]} placeholder="Search invoice number…" filters={[{ name: "status", label: "Status", options: [{ value: "outstanding", label: "Outstanding" }, ...INVOICE_STATUS.options] }, { name: "client", label: "Client", options: clients }]} />
         {rows.length ? <><InvoicesTable rows={rows} /><Pagination total={total} pageSize={params.pageSize} /></> : <EmptyState icon={Receipt} title="No invoices found" action={add} />}
       </Panel>
     </>

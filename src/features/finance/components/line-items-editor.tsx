@@ -37,7 +37,7 @@ export function LineItemsEditor({ initial, taxRates, defaultRate, mode, onModeCh
       <input type="hidden" name="items" value={JSON.stringify(payload)} />
       <Field name="items" label="Line items" required>
         <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="stack w-full text-sm lg:min-w-[720px]">
             <thead className="bg-muted/60 text-xs text-muted-foreground">
               <tr>
                 <th className="px-2 py-2 text-left font-medium">Item</th>
@@ -57,19 +57,19 @@ export function LineItemsEditor({ initial, taxRates, defaultRate, mode, onModeCh
                   <tr key={r.key} className="border-t align-top">
                     <td className="space-y-1 px-2 py-2">
                       <Input value={r.name} onChange={(e) => update(r.key, { name: e.target.value })} placeholder="e.g. Course brochure design" aria-label="Item name" />
-                      <Input value={r.description} onChange={(e) => update(r.key, { description: e.target.value })} placeholder="Description (optional)" className="h-7 text-xs" aria-label="Item description" />
+                      <Input value={r.description} onChange={(e) => update(r.key, { description: e.target.value })} placeholder="Description (optional)" className="lg:h-7 lg:text-xs" aria-label="Item description" />
                     </td>
-                    {showHsn && <td className="px-2 py-2"><Input value={r.hsn_sac} onChange={(e) => update(r.key, { hsn_sac: e.target.value })} placeholder="998391" aria-label="HSN/SAC" /></td>}
-                    <td className="px-2 py-2"><Input value={r.quantity} onChange={(e) => update(r.key, { quantity: e.target.value })} inputMode="decimal" className="text-right" aria-label="Quantity" aria-invalid={badNumber(r.quantity) || undefined} /></td>
-                    <td className="px-2 py-2"><Input value={r.unit_price} onChange={(e) => update(r.key, { unit_price: e.target.value })} inputMode="decimal" className="text-right" placeholder="0" aria-label="Unit price" aria-invalid={badNumber(r.unit_price) || undefined} /></td>
-                    <td className="px-2 py-2"><Input value={r.discount_pct} onChange={(e) => update(r.key, { discount_pct: e.target.value })} inputMode="decimal" className="text-right" aria-label="Discount percent" aria-invalid={badNumber(r.discount_pct) || undefined} /></td>
-                    <td className="px-2 py-2">
+                    {showHsn && <td data-label="HSN/SAC" className="px-2 py-2"><Input value={r.hsn_sac} onChange={(e) => update(r.key, { hsn_sac: e.target.value })} placeholder="998391" aria-label="HSN/SAC" /></td>}
+                    <td data-label="Qty" className="px-2 py-2"><Input value={r.quantity} onChange={(e) => update(r.key, { quantity: e.target.value })} inputMode="decimal" className="text-right" aria-label="Quantity" aria-invalid={badNumber(r.quantity) || undefined} /></td>
+                    <td data-label="Unit price (₹)" className="px-2 py-2"><Input value={r.unit_price} onChange={(e) => update(r.key, { unit_price: e.target.value })} inputMode="decimal" className="text-right" placeholder="0" aria-label="Unit price" aria-invalid={badNumber(r.unit_price) || undefined} /></td>
+                    <td data-label="Discount %" className="px-2 py-2"><Input value={r.discount_pct} onChange={(e) => update(r.key, { discount_pct: e.target.value })} inputMode="decimal" className="text-right" aria-label="Discount percent" aria-invalid={badNumber(r.discount_pct) || undefined} /></td>
+                    <td data-label="Tax" className="px-2 py-2">
                       <select className="field-select" value={r.tax_rate} onChange={(e) => update(r.key, { tax_rate: e.target.value })} aria-label="Tax rate">
                         {rates.map((t) => <option key={t.rate} value={t.rate}>{t.label}</option>)}
                       </select>
                     </td>
-                    <td className="px-2 py-3 text-right tabular-nums">{formatINR(a.total)}</td>
-                    <td className="px-1 py-2">
+                    <td data-label="Amount" className="px-2 py-3 text-right font-medium tabular-nums">{formatINR(a.total)}</td>
+                    <td data-actions className="px-1 py-2">
                       <Button type="button" variant="ghost" size="icon-sm" aria-label="Remove line" disabled={rows.length === 1} onClick={() => setRows((rs) => rs.filter((x) => x.key !== r.key))}><Trash2 /></Button>
                     </td>
                   </tr>
@@ -82,7 +82,7 @@ export function LineItemsEditor({ initial, taxRates, defaultRate, mode, onModeCh
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex flex-wrap items-end gap-3">
           <Button type="button" variant="outline" size="sm" onClick={() => setRows((rs) => [...rs, blank(defaultRate)])}><Plus /> Add line</Button>
-          <Field name="tax_mode" label="GST treatment" className="w-56">
+          <Field name="tax_mode" label="GST treatment" className="w-full sm:w-56">
             <NativeSelect name="tax_mode" value={mode} onChange={(e) => onModeChange(e.target.value as TaxMode)}>
               {TAX_MODE.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </NativeSelect>

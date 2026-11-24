@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, ChevronLeft, ChevronRight, KanbanSquare, List, Loader2, Search, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, ChevronLeft, ChevronRight, KanbanSquare, List, Loader2, Search, SlidersHorizontal, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { startNavigation } from "@/components/app/nav-feedback";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 function useParamNav() {
@@ -31,9 +32,12 @@ function useParamNav() {
 
 export type FilterDef = { name: string; label: string; options: { value: string; label: string }[] };
 
-export function TableToolbar({ placeholder = "Search…", filters = [], children }: { placeholder?: string; filters?: FilterDef[]; children?: React.ReactNode }) {
+export type SortDef = { value: string; label: string };
+
+export function TableToolbar({ placeholder = "Search…", filters = [], sorts = [], children }: { placeholder?: string; filters?: FilterDef[]; sorts?: SortDef[]; children?: React.ReactNode }) {
   const { params, set, pending } = useParamNav();
   const [q, setQ] = useState(params.get("q") ?? "");
+  const [sheet, setSheet] = useState(false);
   const first = useRef(true);
 
   useEffect(() => {
@@ -43,35 +47,56 @@ export function TableToolbar({ placeholder = "Search…", filters = [], children
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
 
-  const active = filters.some((f) => params.get(f.name)) || !!params.get("q");
+  const activeCount = filters.filter((f) => params.get(f.name)).length;
+  const active = activeCount > 0 || !!params.get("q");
+  const reset = () => { setQ(""); set(Object.fromEntries([["q", null], ...filters.map((f) => [f.name, null])])); };
+  const sortValue = params.get("sort") ? `${params.get("sort")}:${params.get("dir") ?? "asc"}` : "";
+
+  const filterSelect = (f: FilterDef, className: string) => (
+    <select key={f.name} aria-label={f.label} className={cn("field-select", className)} value={params.get(f.name) ?? ""} onChange={(e) => set({ [f.name]: e.target.value || null })}>
+      <option value="">{f.label}: All</option>
+      {f.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  );
 
   return (
-    <div className="flex flex-col gap-2 border-b p-3 sm:flex-row sm:items-center">
-      <div className="relative sm:max-w-xs sm:flex-1">
+    <div className="flex items-center gap-2 border-b p-3 lg:flex-wrap">
+      <div className="relative min-w-0 flex-1 lg:max-w-xs">
         <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={placeholder} className="pl-8" aria-label="Search" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={placeholder} className="pl-8" aria-label="Search" enterKeyHint="search" />
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        {filters.map((f) => (
-          <select
-            key={f.name}
-            aria-label={f.label}
-            className="field-select w-auto min-w-36"
-            value={params.get(f.name) ?? ""}
-            onChange={(e) => set({ [f.name]: e.target.value || null })}
-          >
-            <option value="">{f.label}: All</option>
-            {f.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        ))}
-        {active && (
-          <Button variant="ghost" size="sm" onClick={() => { setQ(""); set(Object.fromEntries([["q", null], ...filters.map((f) => [f.name, null])])); }}>
-            <X /> Reset
-          </Button>
-        )}
-        {pending && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+
+      {(filters.length > 0 || sorts.length > 0) && (
+        <Sheet open={sheet} onOpenChange={setSheet}>
+          <SheetTrigger render={<Button variant="outline" className="relative shrink-0 lg:hidden" aria-label={`Filters${activeCount ? ` (${activeCount} on)` : ""}`} />}>
+            <SlidersHorizontal /> Filters
+            {activeCount > 0 && <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-white">{activeCount}</span>}
+          </SheetTrigger>
+          <SheetContent side="bottom" className="max-h-[85dvh] gap-3 overflow-y-auto rounded-t-2xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            <SheetTitle>Filter and sort</SheetTitle>
+            {filters.map((f) => <label key={f.name} className="grid gap-1 text-xs text-muted-foreground">{f.label}{filterSelect(f, "text-foreground")}</label>)}
+            {sorts.length > 0 && (
+              <label className="grid gap-1 text-xs text-muted-foreground">Sort by
+                <select className="field-select text-foreground" value={sortValue} onChange={(e) => { const [sort, dir] = e.target.value.split(":"); set({ sort: sort || null, dir: dir ?? null }); }}>
+                  <option value="">Default</option>
+                  {sorts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </label>
+            )}
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <Button variant="outline" onClick={reset} disabled={!active}>Reset</Button>
+              <Button onClick={() => setSheet(false)}>Show results</Button>
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
+
+      <div className="hidden flex-wrap items-center gap-2 lg:flex">
+        {filters.map((f) => filterSelect(f, "w-auto min-w-32 max-w-48"))}
+        {active && <Button variant="ghost" size="sm" onClick={reset}><X /> Reset</Button>}
       </div>
-      {children && <div className="flex items-center gap-2 sm:ml-auto">{children}</div>}
+      {pending && <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />}
+      {children && <div className="flex items-center gap-2 lg:ml-auto">{children}</div>}
     </div>
   );
 }
@@ -131,7 +156,7 @@ export function ViewSwitch({ views, defaultView }: { views: { value: string; lab
           key={v.value}
           type="button"
           onClick={() => set({ view: v.value === defaultView ? null : v.value })}
-          className={cn("inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium text-muted-foreground transition-colors", current === v.value && "bg-accent text-accent-foreground")}
+          className={cn("inline-flex h-10 items-center gap-1.5 rounded-md px-3 md:h-7 md:px-2.5 text-xs font-medium text-muted-foreground transition-colors", current === v.value && "bg-accent text-accent-foreground")}
         >
           {v.icon && (() => { const Icon = VIEW_ICONS[v.icon]; return <Icon className="size-3.5" />; })()}
           {v.label}

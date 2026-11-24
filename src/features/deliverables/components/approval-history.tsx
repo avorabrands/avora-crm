@@ -18,7 +18,7 @@ export function ApprovalHistory({ projectId, approvals, revisions }: { projectId
               <li key={r.id} className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-500/30 dark:bg-amber-500/10">
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-medium">{r.deliverable?.name} <Pill tone="amber">Revision {r.revision_number}</Pill></p>
-                  <ActionTrigger action={resolveRevision.bind(null, projectId, r.id)} className="shrink-0 text-xs text-primary hover:underline">Mark addressed</ActionTrigger>
+                  <ActionTrigger action={resolveRevision.bind(null, projectId, r.id)} className="inline-flex min-h-10 shrink-0 items-center gap-1 rounded-md px-2 text-xs font-medium text-primary hover:underline md:min-h-0 md:px-0">Mark addressed</ActionTrigger>
                 </div>
                 <p className="mt-1 text-sm whitespace-pre-wrap">{r.notes}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{r.requester?.full_name} · {formatDateTime(r.created_at)}</p>

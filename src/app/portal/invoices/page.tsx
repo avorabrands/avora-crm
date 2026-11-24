@@ -24,9 +24,9 @@ export default async function PortalInvoices() {
             <TableBody>{(data ?? []).map((i) => (
               <TableRow key={i.id}>
                 <TableCell className="pl-4"><Link href={`/portal/invoices/${i.id}`} className="font-medium hover:text-primary">{i.number}</Link></TableCell>
-                <TableCell className="text-sm">{formatDate(i.invoice_date)}</TableCell><TableCell className="text-sm">{formatDate(i.due_date)}</TableCell>
-                <TableCell><StatusBadge def={INVOICE_STATUS} value={effectiveInvoiceStatus(i)} /></TableCell>
-                <TableCell className="text-right tabular-nums">{formatINR(i.total)}</TableCell><TableCell className="pr-4 text-right font-medium tabular-nums">{formatINR(i.balance_due)}</TableCell>
+                <TableCell label="Date" className="text-sm">{formatDate(i.invoice_date)}</TableCell><TableCell label="Due" className="text-sm">{formatDate(i.due_date)}</TableCell>
+                <TableCell label="Status"><StatusBadge def={INVOICE_STATUS} value={effectiveInvoiceStatus(i)} /></TableCell>
+                <TableCell label="Total" className="text-right tabular-nums">{formatINR(i.total)}</TableCell><TableCell label="Balance" className="pr-4 text-right font-medium tabular-nums">{formatINR(i.balance_due)}</TableCell>
               </TableRow>
             ))}</TableBody>
           </Table>

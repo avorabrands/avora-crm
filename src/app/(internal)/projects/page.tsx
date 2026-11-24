@@ -24,7 +24,7 @@ export default async function ProjectsPage({ searchParams }: PageProps<"/project
     <>
       <PageHeader title="Projects" description={session.role === "team_member" ? "Projects you manage or are assigned to." : "Every client engagement with its deliverables, team, approvals and billing."} breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Projects" }]} actions={add} />
       <Panel bodyClassName="p-0">
-        <TableToolbar placeholder="Search projects…" filters={[
+        <TableToolbar sorts={[{ value: "due_date:asc", label: "Delivery soonest" }, { value: "created_at:desc", label: "Newest first" }, { value: "progress:desc", label: "Most progress" }, { value: "name:asc", label: "Name A–Z" }]} placeholder="Search projects…" filters={[
           { name: "status", label: "Status", options: [{ value: "active", label: "All active" }, ...PROJECT_STATUS.options] },
           { name: "category", label: "Category", options: PROJECT_CATEGORY.options },
           { name: "client", label: "Client", options: clients },

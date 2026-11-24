@@ -17,7 +17,7 @@ export function FinanceDocument({ kind, number, title, company, party, meta, ite
   const breakdown = documentTotals(items.map((i) => ({ ...i, quantity: Number(i.quantity), unit_price: Number(i.unit_price), discount_pct: Number(i.discount_pct), tax_rate: Number(i.tax_rate) })), taxMode as TaxMode).breakdown;
   const showHsn = items.some((i) => i.hsn_sac);
   return (
-    <article className="mx-auto max-w-4xl rounded-xl border bg-white p-8 text-[13px] text-slate-800 shadow-sm print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none dark:bg-white">
+    <article className="mx-auto max-w-4xl rounded-xl border bg-white p-4 text-[13px] sm:p-8 text-slate-800 shadow-sm print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none dark:bg-white">
       <header className="flex flex-wrap items-start justify-between gap-6 border-b border-slate-200 pb-6">
         <div>
           <div className="flex items-center gap-2"><Image src="/avora-logo.png" alt="" width={36} height={36} className="size-9 rounded-lg" /><p className="text-lg font-semibold text-slate-900">{company?.company_name ?? "Avora Brands"}</p></div>
@@ -26,10 +26,10 @@ export function FinanceDocument({ kind, number, title, company, party, meta, ite
           <p className="text-slate-600">{[company?.email, company?.phone].filter(Boolean).join(" · ")}</p>
           {company?.gstin && <p className="text-slate-600">GSTIN: {company.gstin}</p>}
         </div>
-        <div className="text-right">
+        <div className="sm:text-right">
           <p className="text-2xl font-semibold tracking-tight text-slate-900">{kind}</p>
           <p className="font-medium text-[#7047EB]">{number}</p>
-          <dl className="mt-3 space-y-0.5">{meta.map((m) => <div key={m.label} className="flex justify-end gap-3"><dt className="text-slate-500">{m.label}</dt><dd className="min-w-24 font-medium">{m.value}</dd></div>)}</dl>
+          <dl className="mt-3 space-y-0.5">{meta.map((m) => <div key={m.label} className="flex gap-3 sm:justify-end"><dt className="text-slate-500">{m.label}</dt><dd className="min-w-24 font-medium">{m.value}</dd></div>)}</dl>
         </div>
       </header>
       <section className="grid gap-6 py-6 sm:grid-cols-2">
@@ -43,7 +43,7 @@ export function FinanceDocument({ kind, number, title, company, party, meta, ite
         </div>
         {title && <div><p className="text-[11px] font-semibold tracking-wider text-slate-500 uppercase">Subject</p><p className="mt-1 font-medium text-slate-900">{title}</p></div>}
       </section>
-      <table className="w-full border-collapse">
+      <table className="stack w-full border-collapse">
         <thead><tr className="border-y border-slate-200 bg-slate-50 text-left text-[11px] tracking-wider text-slate-500 uppercase">
           <th className="px-2 py-2 font-semibold">#</th><th className="px-2 py-2 font-semibold">Item</th>{showHsn && <th className="px-2 py-2 font-semibold">HSN/SAC</th>}
           <th className="px-2 py-2 text-right font-semibold">Qty</th><th className="px-2 py-2 text-right font-semibold">Rate</th><th className="px-2 py-2 text-right font-semibold">Disc.</th><th className="px-2 py-2 text-right font-semibold">GST</th><th className="px-2 py-2 text-right font-semibold">Amount</th>
@@ -51,14 +51,14 @@ export function FinanceDocument({ kind, number, title, company, party, meta, ite
         <tbody>
           {items.map((it, i) => (
             <tr key={it.id} className="border-b border-slate-100 align-top">
-              <td className="px-2 py-2.5 text-slate-500">{i + 1}</td>
-              <td className="px-2 py-2.5"><p className="font-medium text-slate-900">{it.name}</p>{it.description && <p className="text-slate-500">{it.description}</p>}</td>
-              {showHsn && <td className="px-2 py-2.5">{it.hsn_sac}</td>}
-              <td className="px-2 py-2.5 text-right tabular-nums">{Number(it.quantity)}</td>
-              <td className="px-2 py-2.5 text-right tabular-nums">{formatINR(it.unit_price)}</td>
-              <td className="px-2 py-2.5 text-right tabular-nums">{Number(it.discount_pct) ? `${Number(it.discount_pct)}%` : "—"}</td>
-              <td className="px-2 py-2.5 text-right tabular-nums">{taxMode === "none" ? "—" : `${Number(it.tax_rate)}%`}</td>
-              <td className="px-2 py-2.5 text-right font-medium tabular-nums">{formatINR(taxMode === "none" ? Number(it.quantity) * Number(it.unit_price) * (1 - Number(it.discount_pct) / 100) : it.line_total)}</td>
+              <td className="m-hide px-2 py-2.5 text-slate-500">{i + 1}</td>
+              <td data-title className="px-2 py-2.5"><p className="font-medium text-slate-900">{it.name}</p>{it.description && <p className="text-slate-500">{it.description}</p>}</td>
+              {showHsn && <td data-label="HSN/SAC" className="px-2 py-2.5">{it.hsn_sac}</td>}
+              <td data-label="Qty" className="px-2 py-2.5 text-right tabular-nums">{Number(it.quantity)}</td>
+              <td data-label="Rate" className="px-2 py-2.5 text-right tabular-nums">{formatINR(it.unit_price)}</td>
+              <td data-label="Discount" className="px-2 py-2.5 text-right tabular-nums">{Number(it.discount_pct) ? `${Number(it.discount_pct)}%` : "—"}</td>
+              <td data-label="GST" className="px-2 py-2.5 text-right tabular-nums">{taxMode === "none" ? "—" : `${Number(it.tax_rate)}%`}</td>
+              <td data-label="Amount" className="px-2 py-2.5 text-right font-medium tabular-nums">{formatINR(taxMode === "none" ? Number(it.quantity) * Number(it.unit_price) * (1 - Number(it.discount_pct) / 100) : it.line_total)}</td>
             </tr>
           ))}
         </tbody>
@@ -89,7 +89,7 @@ export function FinanceDocument({ kind, number, title, company, party, meta, ite
 
 export function ReceiptDocument({ company, payment }: { company: CompanySettings | null; payment: { receipt_number: string; payment_date: string; amount: number; method: string; payment_type: string; transaction_id: string | null; reference_number: string | null; notes: string | null; client: Party; invoice: { number: string } | null } }) {
   return (
-    <article className="mx-auto max-w-2xl rounded-xl border bg-white p-8 text-[13px] text-slate-800 shadow-sm print:border-0 print:p-0 print:shadow-none">
+    <article className="mx-auto max-w-2xl rounded-xl border bg-white p-4 text-[13px] sm:p-8 text-slate-800 shadow-sm print:border-0 print:p-0 print:shadow-none">
       <header className="flex items-start justify-between border-b border-slate-200 pb-5">
         <div><p className="text-lg font-semibold text-slate-900">{company?.company_name ?? "Avora Brands"}</p>{company?.gstin && <p className="text-slate-600">GSTIN: {company.gstin}</p>}<p className="text-slate-600">{company?.address}</p></div>
         <div className="text-right"><p className="text-xl font-semibold text-slate-900">Payment receipt</p><p className="font-medium text-[#7047EB]">{payment.receipt_number}</p><p className="text-slate-500">{formatDate(payment.payment_date)}</p></div>

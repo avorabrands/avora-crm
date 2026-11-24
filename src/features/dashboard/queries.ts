@@ -18,7 +18,7 @@ export async function dashboardData(opts: { finance: boolean; sales: boolean; us
   let overdueQ = supabase.from("tasks").select("id", head).in("status", OPEN_TASK_STATUSES).lt("due_date", today);
   if (opts.mine) overdueQ = overdueQ.eq("assigned_to", opts.userId);
 
-  const [leads, clients, projects, upcomingTasks, overdueTasks, pendingApprovals, upcomingProjects, recentLeads, activity, invoices, payments, quotations] = await Promise.all([
+  const [leads, clients, projects, upcomingTasks, overdueTasks, pendingApprovals, upcomingProjects, recentLeads, activity, invoices, payments, quotations, followUps] = await Promise.all([
     opts.sales ? supabase.from("leads").select("status, estimated_budget") : none,
     supabase.from("clients").select("id", head),
     supabase.from("projects").select("status, due_date"),
@@ -31,6 +31,8 @@ export async function dashboardData(opts: { finance: boolean; sales: boolean; us
     opts.finance ? supabase.from("invoices").select("id, number, total, amount_paid, balance_due, due_date, status, client:clients(company_name)").in("status", ["unpaid", "partially_paid", "paid"]) : none,
     opts.finance ? supabase.from("payments").select("amount, payment_date").gte("payment_date", since) : none,
     opts.finance ? supabase.from("quotations").select("total").in("status", ["sent", "viewed"]) : none,
+    // RLS limits team members to the leads assigned to them
+    supabase.from("leads").select("id, company_name, contact_person, phone, email, next_follow_up").lte("next_follow_up", today).not("status", "in", "(won,lost)").order("next_follow_up").limit(6),
   ]);
 
   const leadRows = (leads.data ?? []) as { status: string; estimated_budget: number | null }[];
@@ -67,6 +69,8 @@ export async function dashboardData(opts: { finance: boolean; sales: boolean; us
     upcomingProjects: (upcomingProjects.data ?? []) as unknown as { id: string; name: string; due_date: string; status: string; progress: number; client: { company_name: string } | null }[],
     recentLeads: (recentLeads.data ?? []) as unknown as { id: string; company_name: string; contact_person: string | null; source: string | null; status: string; created_at: string }[],
     activity: (activity.data ?? []) as unknown as { id: string; summary: string; created_at: string; actor: { full_name: string } | null }[],
+    followUps: (followUps.data ?? []) as { id: string; company_name: string; contact_person: string | null; phone: string | null; email: string | null; next_follow_up: string }[],
+    tasksToday: ((upcomingTasks.data ?? []) as unknown as { id: string; title: string; due_date: string; project: { name: string } | null }[]).filter((t) => t.due_date <= today),
     reminders: open.sort((a, b) => a.due_date.localeCompare(b.due_date)).slice(0, 6),
   };
 }

@@ -35,7 +35,7 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
   const canApprove = can(session.role, "tasks.manage");
 
   const add = (
-    <FormSheet trigger={<Button><Plus /> New task</Button>} title="New task" action={createTask}>
+    <FormSheet openKey="task" trigger={<Button><Plus /> New task</Button>} title="New task" action={createTask}>
       <TaskFields staff={staff} projects={projects} deliverables={deliverables} canApprove={canApprove} />
     </FormSheet>
   );
@@ -52,7 +52,7 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
         </>}
       />
       <Panel bodyClassName="p-0">
-        <TableToolbar placeholder="Search tasks…" filters={[
+        <TableToolbar sorts={[{ value: "due_date:asc", label: "Due soonest" }, { value: "priority:desc", label: "Highest priority" }, { value: "created_at:desc", label: "Newest first" }]} placeholder="Search tasks…" filters={[
           { name: "assignee", label: "Assignee", options: [{ value: "me", label: "Me" }, { value: "none", label: "Unassigned" }, ...staff] },
           ...(view === "board" ? [] : [{ name: "status", label: "Status", options: [{ value: "open", label: "All open" }, ...TASK_STATUS.options] }]),
           { name: "priority", label: "Priority", options: PRIORITY.options },
