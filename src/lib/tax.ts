@@ -3,6 +3,20 @@
 export type LineItem = { name: string; description?: string | null; hsn_sac?: string | null; quantity: number; unit_price: number; discount_pct: number; tax_rate: number };
 export type TaxMode = "intra_state" | "inter_state" | "none";
 
+/**
+ * Parses what people type in amount boxes: "2,500", "₹ 1,00,000.50", "Rs. 2500".
+ * Returns NaN for blank or non-numeric text — never a silent 0.
+ */
+export function parseAmount(v: unknown): number {
+  const s = String(v ?? "").trim().replace(/^(₹|rs\.?|inr)\s*/i, "").replace(/[,\s]/g, "");
+  return /^-?(\d+\.?\d*|\.\d+)$/.test(s) ? Number(s) : NaN;
+}
+
+/** GST treatment from the two states; unknown states default to intra-state. */
+export function suggestTaxMode(companyState: string | null | undefined, clientState: string | null | undefined): TaxMode {
+  return companyState && clientState && companyState !== clientState ? "inter_state" : "intra_state";
+}
+
 const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 export function lineAmounts(i: LineItem) {

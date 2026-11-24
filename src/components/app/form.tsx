@@ -20,7 +20,9 @@ const FormPending = createContext(false);
 export function Field({ name, label, hint, required, children, className }: { name?: string; label: string; hint?: string; required?: boolean; children: React.ReactNode; className?: string }) {
   const errors = useContext(FieldErrors);
   const uid = useId();
-  const error = name ? errors?.[name] : undefined;
+  // nested errors ("items.1.unit_price") surface on their parent field as "Line 2: …"
+  const nested = name && errors ? Object.keys(errors).find((k) => k.startsWith(`${name}.`)) : undefined;
+  const error = name ? errors?.[name] ?? (nested ? `Line ${Number(nested.split(".")[1]) + 1}: ${errors![nested]}` : undefined) : undefined;
   // link the label to a single form control child (accessible name + click-to-focus)
   const control = isValidElement<{ id?: string; name?: string; "aria-invalid"?: boolean }>(children) && children.props.name ? children : null;
   const controlId = control ? control.props.id ?? `${uid}-${control.props.name}` : undefined;

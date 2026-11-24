@@ -1,14 +1,17 @@
 import { z } from "zod";
 import { PAYMENT_METHOD, PAYMENT_TYPE, TAX_MODE } from "@/lib/constants";
+import { parseAmount } from "@/lib/tax";
 import { zDate, zEnum, zRequired, zText, zUuid } from "@/lib/actions";
 
+const amount = (missing: string) => z.preprocess(parseAmount, z.number({ error: missing }));
+
 export const lineItemSchema = z.object({
-  name: z.string().trim().min(1, "Item name is required").max(200),
+  name: z.string().trim().min(1, "enter an item name").max(200),
   description: z.string().trim().max(1000).nullish().transform((v) => v || null),
   hsn_sac: z.string().trim().max(20).nullish().transform((v) => v || null),
-  quantity: z.coerce.number().positive("Quantity must be more than 0").max(1e6),
-  unit_price: z.coerce.number().min(0, "Price can't be negative").max(1e10),
-  discount_pct: z.coerce.number().min(0).max(100).default(0),
+  quantity: amount("enter a valid quantity").pipe(z.number().positive("quantity must be more than 0").max(1e6, "quantity is too large")),
+  unit_price: amount("enter a valid unit price").pipe(z.number().min(0, "price can't be negative").max(1e10, "price is too large")),
+  discount_pct: z.preprocess((v) => (String(v ?? "").trim() === "" ? 0 : parseAmount(v)), z.number({ error: "enter a valid discount" }).min(0, "discount must be 0–100%").max(100, "discount must be 0–100%")),
   tax_rate: z.coerce.number().min(0).max(100).default(0),
 });
 

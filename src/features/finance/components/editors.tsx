@@ -7,22 +7,24 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ActionForm, Field, NativeSelect, SubmitButton, type FormAction } from "@/components/app/form";
 import { Panel } from "@/components/app/panel";
-import type { LineItem, TaxMode } from "@/lib/tax";
+import { suggestTaxMode, type LineItem, type TaxMode } from "@/lib/tax";
 import { daysFromTodayISO } from "@/lib/format";
 import type { Option } from "@/features/common/lookups";
 import { LineItemsEditor } from "./line-items-editor";
 
 type Common = { action: FormAction; clients: (Option & { state?: string | null })[]; projects: (Option & { clientId: string })[]; taxRates: { label: string; rate: number }[]; defaultRate: number; companyState: string | null; cancelHref: string; items?: LineItem[] };
 
-function useClientTax(clients: Common["clients"], companyState: string | null, initialClient: string, initialMode?: TaxMode) {
-  const [clientId, setClientId] = useState(initialClient);
-  const st = clients.find((c) => c.value === clientId)?.state;
-  const suggested: TaxMode = !companyState || !st ? "intra_state" : st === companyState ? "intra_state" : "inter_state";
-  return { clientId, setClientId, mode: initialMode ?? suggested };
+/** Picking a client suggests the GST treatment; it never touches the line items. */
+function useClientTax(clients: Common["clients"], companyState: string | null, initialClient: string, savedMode?: TaxMode) {
+  const suggest = (id: string) => suggestTaxMode(companyState, clients.find((c) => c.value === id)?.state);
+  const [clientId, setClient] = useState(initialClient);
+  const [mode, setMode] = useState<TaxMode>(() => savedMode ?? suggest(initialClient));
+  const setClientId = (id: string) => { setClient(id); setMode(suggest(id)); };
+  return { clientId, setClientId, mode, setMode };
 }
 
 export function QuotationEditor({ q, leads, ...p }: Common & { leads: Option[]; q?: { client_id: string | null; lead_id: string | null; project_id: string | null; title: string; description: string | null; issue_date: string; valid_until: string | null; tax_mode: TaxMode; payment_terms: string | null; terms: string | null; notes: string | null } }) {
-  const { clientId, setClientId, mode } = useClientTax(p.clients, p.companyState, q?.client_id ?? "", q?.tax_mode);
+  const { clientId, setClientId, mode, setMode } = useClientTax(p.clients, p.companyState, q?.client_id ?? "", q?.tax_mode);
   const today = daysFromTodayISO(0);
   const in30 = daysFromTodayISO(30);
   return (
@@ -44,7 +46,7 @@ export function QuotationEditor({ q, leads, ...p }: Common & { leads: Option[]; 
           <Field name="description" label="Scope / description" className="sm:col-span-2"><Textarea name="description" rows={3} defaultValue={q?.description ?? ""} /></Field>
         </div>
       </Panel>
-      <Panel title="Line items"><LineItemsEditor key={mode} initial={p.items} taxRates={p.taxRates} defaultRate={p.defaultRate} initialMode={mode} /></Panel>
+      <Panel title="Line items"><LineItemsEditor initial={p.items} taxRates={p.taxRates} defaultRate={p.defaultRate} mode={mode} onModeChange={setMode} /></Panel>
       <Panel title="Terms">
         <div className="grid gap-4">
           <Field name="payment_terms" label="Payment terms"><Textarea name="payment_terms" rows={2} defaultValue={q?.payment_terms ?? ""} /></Field>
@@ -58,7 +60,7 @@ export function QuotationEditor({ q, leads, ...p }: Common & { leads: Option[]; 
 }
 
 export function InvoiceEditor({ inv, milestones, ...p }: Common & { milestones: (Option & { projectId: string })[]; inv?: { client_id: string; project_id: string | null; milestone_id: string | null; invoice_date: string; due_date: string; tax_mode: TaxMode; notes: string | null; terms: string | null }; defaultProjectId?: string }) {
-  const { clientId, setClientId, mode } = useClientTax(p.clients, p.companyState, inv?.client_id ?? "", inv?.tax_mode);
+  const { clientId, setClientId, mode, setMode } = useClientTax(p.clients, p.companyState, inv?.client_id ?? "", inv?.tax_mode);
   const [projectId, setProjectId] = useState(inv?.project_id ?? p.defaultProjectId ?? "");
   const today = daysFromTodayISO(0);
   const in15 = daysFromTodayISO(15);
@@ -79,7 +81,7 @@ export function InvoiceEditor({ inv, milestones, ...p }: Common & { milestones: 
           </Field>
         </div>
       </Panel>
-      <Panel title="Line items"><LineItemsEditor key={mode} initial={p.items} taxRates={p.taxRates} defaultRate={p.defaultRate} initialMode={mode} showHsn /></Panel>
+      <Panel title="Line items"><LineItemsEditor initial={p.items} taxRates={p.taxRates} defaultRate={p.defaultRate} mode={mode} onModeChange={setMode} showHsn /></Panel>
       <Panel title="Notes & terms">
         <div className="grid gap-4">
           <Field name="notes" label="Notes to client"><Textarea name="notes" rows={2} defaultValue={inv?.notes ?? ""} /></Field>
