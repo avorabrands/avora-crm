@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /** White rounded card used across the app. */
@@ -35,7 +36,7 @@ export function StatCard({ label, value, hint, icon: Icon, tone = "default", hre
     </div>
   );
   const cls = "block rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]";
-  return href ? <a href={href} className={cn(cls, "transition-colors hover:border-primary/40")}>{body}</a> : <div className={cls}>{body}</div>;
+  return href ? <Link href={href} className={cn(cls, "transition-colors hover:border-primary/40")}>{body}</Link> : <div className={cls}>{body}</div>;
 }
 
 export function DescriptionList({ items, columns = 2 }: { items: { label: string; value: React.ReactNode }[]; columns?: 1 | 2 | 3 }) {

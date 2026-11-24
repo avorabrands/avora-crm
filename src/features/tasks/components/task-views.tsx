@@ -6,6 +6,7 @@ import { addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMont
 import { CalendarClock, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { KanbanBoard, COLUMN_ACCENT } from "@/components/app/kanban";
+import { startNavigation } from "@/components/app/nav-feedback";
 import { StatusBadge } from "@/components/app/status-badge";
 import { UserAvatar } from "@/components/app/user-avatar";
 import { PRIORITY, TASK_STATUS, OPEN_TASK_STATUSES, type TaskStatus } from "@/lib/constants";
@@ -47,7 +48,7 @@ export function TaskCalendar({ tasks, month }: { tasks: TaskRow[]; month: string
   const params = useSearchParams();
   const anchor = parseISO(`${month}-01`);
   const days = eachDayOfInterval({ start: startOfWeek(startOfMonth(anchor), { weekStartsOn: 1 }), end: endOfWeek(endOfMonth(anchor), { weekStartsOn: 1 }) });
-  const go = (d: Date) => { const n = new URLSearchParams(params.toString()); n.set("month", format(d, "yyyy-MM")); router.replace(`${pathname}?${n}`, { scroll: false }); };
+  const go = (d: Date) => { const n = new URLSearchParams(params.toString()); n.set("month", format(d, "yyyy-MM")); startNavigation(`${pathname}?${n}`); router.replace(`${pathname}?${n}`, { scroll: false }); };
   const byDay = tasks.reduce<Record<string, TaskRow[]>>((acc, t) => { if (t.due_date) (acc[t.due_date] ??= []).push(t); return acc; }, {});
 
   return (

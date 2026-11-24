@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Search } from "lucide-react";
 import { CommandDialog, Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { startNavigation } from "@/components/app/nav-feedback";
 import { globalSearch, type SearchHit } from "@/features/search/actions";
 
 export function GlobalSearch() {
@@ -46,7 +47,7 @@ export function GlobalSearch() {
             {Object.entries(groups).map(([type, items]) => (
               <CommandGroup key={type} heading={type}>
                 {items.map((h) => (
-                  <CommandItem key={h.type + h.id} value={h.type + h.id} onSelect={() => { setOpen(false); router.push(h.href); }}>
+                  <CommandItem key={h.type + h.id} value={h.type + h.id} onSelect={() => { setOpen(false); startNavigation(h.href); router.push(h.href); }}>
                     <div className="min-w-0">
                       <p className="truncate">{h.title}</p>
                       {h.subtitle && <p className="truncate text-xs text-muted-foreground">{h.subtitle}</p>}

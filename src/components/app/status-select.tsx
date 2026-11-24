@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useOptimistic, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -12,6 +12,7 @@ export function StatusSelect({ value, options, onChange, className, disabled, la
   value: string; options: { value: string; label: string }[]; onChange: (v: string) => Promise<FormActionState>; className?: string; disabled?: boolean; label?: string;
 }) {
   const [pending, start] = useTransition();
+  const [shown, setShown] = useOptimistic(value); // show the choice at once; reverts if saving fails
   const router = useRouter();
   return (
     <span className="relative inline-flex items-center">
@@ -19,10 +20,11 @@ export function StatusSelect({ value, options, onChange, className, disabled, la
         aria-label={label}
         disabled={disabled || pending}
         className={cn("field-select h-7 w-auto pr-7 text-xs", className)}
-        value={value}
+        value={shown}
         onChange={(e) => {
           const v = e.target.value;
           start(async () => {
+            setShown(v);
             const res = await onChange(v);
             if (res.ok) { if (res.message) toast.success(res.message); router.refresh(); }
             else toast.error(res.message ?? "Update failed");

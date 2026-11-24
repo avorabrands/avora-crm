@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LinkPendingLine } from "@/components/app/nav-feedback";
 import { cn } from "@/lib/utils";
 
 /** Server-rendered tabs driven by ?tab= so each tab loads only its own data. */
@@ -14,9 +15,10 @@ export function TabNav({ base, tabs, current }: { base: string; tabs: { id: stri
               href={i === 0 ? base : `${base}${base.includes("?") ? "&" : "?"}tab=${t.id}`}
               scroll={false}
               aria-current={active ? "page" : undefined}
-              className={cn("-mb-px flex items-center gap-1.5 border-b-2 border-transparent px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground", active && "border-primary font-medium text-foreground")}
+              className={cn("relative -mb-px flex items-center gap-1.5 border-b-2 border-transparent px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground", active && "border-primary font-medium text-foreground")}
             >
               {t.label}
+              <LinkPendingLine />
               {t.count != null && <span className="rounded-full bg-muted px-1.5 text-[11px] tabular-nums">{t.count}</span>}
             </Link>
           );

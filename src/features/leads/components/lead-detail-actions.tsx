@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ConfirmAction } from "@/components/app/confirm";
 import { ActionForm, Field, FormDialog, FormSheet, NativeSelect, SubmitButton, type FormAction } from "@/components/app/form";
+import { startNavigation } from "@/components/app/nav-feedback";
 import { StatusSelect } from "@/components/app/status-select";
 import { LEAD_STATUS, PROJECT_CATEGORY } from "@/lib/constants";
 import type { Option } from "@/features/common/lookups";
@@ -55,7 +56,7 @@ export function LeadHeaderActions({ lead, staff, update, convert, canManage, can
           title={`Delete ${lead.company_name}?`}
           description="The lead and its follow-up history will be permanently removed. This cannot be undone."
           action={() => deleteLead(lead.id)}
-          onDone={() => router.push("/leads")}
+          onDone={() => { startNavigation("/leads"); router.push("/leads"); }}
         />
       )}
     </>

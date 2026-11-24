@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, ChevronLeft, ChevronRight, KanbanSquare, List, Loader2, Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { startNavigation } from "@/components/app/nav-feedback";
 import { cn } from "@/lib/utils";
 
 function useParamNav() {
@@ -21,6 +22,8 @@ function useParamNav() {
     }
     if (resetPage) next.delete("page");
     const qs = next.toString();
+    if (qs === params.toString()) return; // nothing changed, nothing to load
+    startNavigation(qs ? `${pathname}?${qs}` : pathname);
     start(() => router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false }));
   };
   return { params, set, pending, pathname };

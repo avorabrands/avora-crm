@@ -134,7 +134,8 @@ export function DeliverablesTracker({ projectId, rows, staff, canManage }: Props
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border bg-card">
+      {pending && <div role="status" className="fixed right-4 bottom-4 z-50 flex items-center gap-2 rounded-full border bg-popover px-4 py-2 text-sm shadow-lg"><Loader2 className="size-4 animate-spin text-primary" /> Saving…</div>}
+      <div aria-busy={pending} className={cn("overflow-x-auto rounded-xl border bg-card transition-opacity", pending && "pointer-events-none opacity-60")}>
         <table className="w-full min-w-[1200px] text-sm">
           <thead className="border-b bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>

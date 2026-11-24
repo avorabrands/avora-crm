@@ -4,12 +4,13 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { startNavigation } from "@/components/app/nav-feedback";
 import type { Option } from "@/features/common/lookups";
 
 export function ReportFilters({ from, to, clients, projects, staff }: { from: string; to: string; clients: Option[]; projects: Option[]; staff: Option[] }) {
   const router = useRouter(); const pathname = usePathname(); const params = useSearchParams();
   const [pending, start] = useTransition();
-  const set = (k: string, v: string) => { const n = new URLSearchParams(params.toString()); if (v) n.set(k, v); else n.delete(k); start(() => router.replace(`${pathname}?${n}`, { scroll: false })); };
+  const set = (k: string, v: string) => { const n = new URLSearchParams(params.toString()); if (v) n.set(k, v); else n.delete(k); startNavigation(`${pathname}?${n}`); start(() => router.replace(`${pathname}?${n}`, { scroll: false })); };
   const sel = (k: string, label: string, opts: Option[]) => (
     <select className="field-select w-auto min-w-36" value={params.get(k) ?? ""} onChange={(e) => set(k, e.target.value)} aria-label={label}>
       <option value="">{label}: All</option>{opts.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}

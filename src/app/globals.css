@@ -135,6 +135,14 @@
     @apply font-sans;
   }
 }
+@theme {
+  --animate-nav-progress: nav-progress 8s cubic-bezier(0.1, 0.7, 0.2, 1) forwards;
+  @keyframes nav-progress {
+    from { transform: scaleX(0.08); }
+    to { transform: scaleX(0.95); }
+  }
+}
+
 @layer components {
   .field-select {
     @apply h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50 dark:bg-input/30;

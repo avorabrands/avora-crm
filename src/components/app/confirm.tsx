@@ -8,6 +8,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { startNavigation } from "./nav-feedback";
 import type { FormActionState } from "./form";
 
 type RunAction = () => Promise<FormActionState>;
@@ -21,7 +22,7 @@ function useRun(action: RunAction, after?: (s: FormActionState) => void, redirec
       if (res.ok) {
         if (res.message) toast.success(res.message);
         // after deleting the record a page is showing, leave that page instead of reloading a 404
-        if (redirectTo) router.push(redirectTo);
+        if (redirectTo) { startNavigation(redirectTo); router.push(redirectTo); }
         else router.refresh();
         after?.(res);
       } else toast.error(res.message ?? "Something went wrong");

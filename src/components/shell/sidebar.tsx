@@ -7,6 +7,7 @@ import {
   BarChart3, Building2, CheckSquare, ChevronsLeft, ChevronsRight, FileSignature, FileText, Files, FolderKanban,
   KanbanSquare, LayoutDashboard, Receipt, Settings, Target, Users, Wallet, type LucideIcon,
 } from "lucide-react";
+import { LinkIcon } from "@/components/app/nav-feedback";
 import { Logo } from "@/components/app/logo";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -36,7 +37,7 @@ export function NavLinks({ sections, collapsed = false, onNavigate }: { sections
                   collapsed && "justify-center px-0",
                 )}
               >
-                <Icon className={cn("size-4 shrink-0", active && "text-sidebar-primary")} />
+                <LinkIcon><Icon className={cn("size-4 shrink-0", active && "text-sidebar-primary")} /></LinkIcon>
                 {!collapsed && <span className="truncate">{item.label}</span>}
               </Link>
             );

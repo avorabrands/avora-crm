@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Download, Eye, EyeOff, FileArchive, FileImage, FileText, History, Share2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,7 +63,7 @@ export function FileList({ files, showContext = false, canManage, canDelete }: {
                   )}
                   <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-sm" render={<a href={`/api/files/${f.id}?download=1`} aria-label="Download" />} />}><Download /></TooltipTrigger><TooltipContent>Download</TooltipContent></Tooltip>
                   {f.version > 1 && (
-                    <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-sm" render={<a href={`/files/${root}/versions`} aria-label="Version history" />} />}><History /></TooltipTrigger><TooltipContent>Version history</TooltipContent></Tooltip>
+                    <Tooltip><TooltipTrigger render={<Button variant="ghost" size="icon-sm" render={<Link href={`/files/${root}/versions`} aria-label="Version history" />} />}><History /></TooltipTrigger><TooltipContent>Version history</TooltipContent></Tooltip>
                   )}
                   {canManage && (
                     <>
