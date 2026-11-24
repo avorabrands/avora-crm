@@ -1,4 +1,4 @@
-# AVORA CRM
+# Avora Brands
 **One Workspace. Every Client. Every Project.** — the operating system of Avora Brands.
 
 Leads → clients → projects → course-wise deliverables → client approvals → quotations → invoices → payments, with a separate client portal.

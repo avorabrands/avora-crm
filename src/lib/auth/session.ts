@@ -19,10 +19,10 @@ export type Session = {
 
 /** Reads + verifies the Supabase session once per request (React cache). */
 export const getSession = cache(async (): Promise<Session | null> => {
-  const supabase = await createClient();
-  const { data: claimsData } = await supabase.auth.getClaims();
-  const userId = claimsData?.claims?.sub;
+  const claims = await getClaims();
+  const userId = claims?.sub;
   if (!userId) return null;
+  const supabase = await createClient();
 
   const [{ data: profile }, { data: member }] = await Promise.all([
     supabase.from("profiles").select("full_name, email, avatar_url").eq("id", userId).maybeSingle(),
@@ -40,7 +40,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
   const org = member.organizations as unknown as { name: string } | null;
   return {
     userId,
-    email: profile?.email ?? String(claimsData?.claims?.email ?? ""),
+    email: profile?.email ?? String(claims?.email ?? ""),
     fullName: profile?.full_name || profile?.email || "User",
     avatarUrl: profile?.avatar_url ?? null,
     orgId: member.organization_id,
@@ -51,11 +51,17 @@ export const getSession = cache(async (): Promise<Session | null> => {
   };
 });
 
-/** Signed in AND has an active membership — otherwise to /login or /no-access. */
-export async function requireSession(): Promise<Session> {
+/** Verified JWT claims, read once per request. */
+const getClaims = cache(async () => {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
-  if (!data?.claims?.sub) redirect("/login");
+  return data?.claims ?? null;
+});
+
+/** Signed in AND has an active membership — otherwise to /login or /no-access. */
+export async function requireSession(): Promise<Session> {
+  const claims = await getClaims();
+  if (!claims?.sub) redirect("/login");
   const session = await getSession();
   if (!session) redirect("/no-access");
   return session;

@@ -8,7 +8,7 @@ import "./globals.css";
 const inter = Inter({ variable: "--font-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: { default: "Avora CRM", template: "%s · Avora CRM" },
+  title: { default: "Avora Brands", template: "%s · Avora Brands" },
   description: "One Workspace. Every Client. Every Project.",
 };
 

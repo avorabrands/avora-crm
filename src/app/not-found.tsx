@@ -5,7 +5,7 @@ export default function NotFound() {
   return (
     <main className="min-h-screen p-6">
       <Logo />
-      <NotFoundView homeHref="/" homeLabel="Go to AVORA CRM" />
+      <NotFoundView homeHref="/" homeLabel="Go to Avora Brands" />
     </main>
   );
 }

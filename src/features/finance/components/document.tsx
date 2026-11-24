@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { documentTotals, type TaxMode } from "@/lib/tax";
 import { formatDate, formatINR } from "@/lib/format";
 import { TAX_MODE } from "@/lib/constants";
@@ -19,7 +20,7 @@ export function FinanceDocument({ kind, number, title, company, party, meta, ite
     <article className="mx-auto max-w-4xl rounded-xl border bg-white p-8 text-[13px] text-slate-800 shadow-sm print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none dark:bg-white">
       <header className="flex flex-wrap items-start justify-between gap-6 border-b border-slate-200 pb-6">
         <div>
-          <div className="flex items-center gap-2"><div className="flex size-9 items-center justify-center rounded-lg bg-[#7047EB] font-bold text-white">A</div><p className="text-lg font-semibold text-slate-900">{company?.company_name ?? "Avora Brands"}</p></div>
+          <div className="flex items-center gap-2"><Image src="/avora-logo.png" alt="" width={36} height={36} className="size-9 rounded-lg" /><p className="text-lg font-semibold text-slate-900">{company?.company_name ?? "Avora Brands"}</p></div>
           {company?.legal_name && <p className="mt-2 text-slate-600">{company.legal_name}</p>}
           {company?.address && <p className="max-w-xs whitespace-pre-wrap text-slate-600">{company.address}</p>}
           <p className="text-slate-600">{[company?.email, company?.phone].filter(Boolean).join(" · ")}</p>
