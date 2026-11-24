@@ -12,7 +12,7 @@ import type { FormActionState } from "./form";
 
 type RunAction = () => Promise<FormActionState>;
 
-function useRun(action: RunAction, after?: (s: FormActionState) => void) {
+function useRun(action: RunAction, after?: (s: FormActionState) => void, redirectTo?: string) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const run = (onDone?: () => void) =>
@@ -20,7 +20,9 @@ function useRun(action: RunAction, after?: (s: FormActionState) => void) {
       const res = await action();
       if (res.ok) {
         if (res.message) toast.success(res.message);
-        router.refresh();
+        // after deleting the record a page is showing, leave that page instead of reloading a 404
+        if (redirectTo) router.push(redirectTo);
+        else router.refresh();
         after?.(res);
       } else toast.error(res.message ?? "Something went wrong");
       onDone?.();
@@ -29,11 +31,11 @@ function useRun(action: RunAction, after?: (s: FormActionState) => void) {
 }
 
 /** Destructive / important action behind a confirmation dialog. */
-export function ConfirmAction({ trigger, title, description, confirmLabel = "Delete", destructive = true, action, onDone }: {
-  trigger: ReactElement; title: string; description: string; confirmLabel?: string; destructive?: boolean; action: RunAction; onDone?: (s: FormActionState) => void;
+export function ConfirmAction({ trigger, title, description, confirmLabel = "Delete", destructive = true, action, onDone, redirectTo }: {
+  trigger: ReactElement; title: string; description: string; confirmLabel?: string; destructive?: boolean; action: RunAction; onDone?: (s: FormActionState) => void; redirectTo?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const { run, pending } = useRun(action, onDone);
+  const { run, pending } = useRun(action, onDone, redirectTo);
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger render={trigger} />

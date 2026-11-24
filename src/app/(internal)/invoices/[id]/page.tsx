@@ -45,7 +45,7 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
             {inv.status === "draft" && <ConfirmAction trigger={<Button><Send /> Issue invoice</Button>} title="Issue this invoice?" description="It becomes visible in the client portal and counts towards outstanding. No email is sent (email delivery isn't configured)." confirmLabel="Issue" destructive={false} action={issueInvoice.bind(null, id)} />}
             {open && <RecordPaymentButton invoices={[]} clients={[]} fixedInvoice={opt} />}
             {inv.status !== "cancelled" && inv.status !== "paid" && Number(inv.amount_paid) === 0 && <ConfirmAction trigger={<Button variant="outline"><Ban /> Cancel</Button>} title={`Cancel ${inv.number}?`} description="The invoice will be void and excluded from revenue. The number is not reused." confirmLabel="Cancel invoice" action={cancelInvoice.bind(null, id)} />}
-            {can(s.role, "finance.delete") && ["draft", "cancelled"].includes(inv.status) && <ConfirmAction trigger={<Button variant="ghost" size="icon" aria-label="Delete" className="text-muted-foreground hover:text-destructive"><Trash2 /></Button>} title={`Delete ${inv.number}?`} description="Permanently deletes this draft/cancelled invoice." action={deleteInvoice.bind(null, id)} />}
+            {can(s.role, "finance.delete") && ["draft", "cancelled"].includes(inv.status) && <ConfirmAction trigger={<Button variant="ghost" size="icon" aria-label="Delete" className="text-muted-foreground hover:text-destructive"><Trash2 /></Button>} title={`Delete ${inv.number}?`} description="Permanently deletes this draft/cancelled invoice." action={deleteInvoice.bind(null, id)} redirectTo="/invoices" />}
           </>}
         </>}
       />

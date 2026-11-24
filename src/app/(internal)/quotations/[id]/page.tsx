@@ -50,7 +50,7 @@ export default async function QuotationPage({ params }: PageProps<"/quotations/[
               <ConfirmAction trigger={<Button variant="outline"><X /> Rejected</Button>} title="Record rejection?" description="Marks the quotation as rejected." confirmLabel="Mark rejected" action={setQuotationStatus.bind(null, id, "rejected")} />
             </>}
             {q.status === "accepted" && q.client_id && <ConfirmAction trigger={<Button><Receipt /> Create invoice</Button>} title="Create invoice from quotation?" description="A draft invoice with the same line items will be created for you to review and issue." confirmLabel="Create draft invoice" destructive={false} action={quotationToInvoice.bind(null, id)} />}
-            {(q.status === "draft" || can(s.role, "finance.delete")) && <ConfirmAction trigger={<Button variant="ghost" size="icon" aria-label="Delete" className="text-muted-foreground hover:text-destructive"><Trash2 /></Button>} title={`Delete ${q.number}?`} description="This permanently deletes the quotation." action={deleteQuotation.bind(null, id)} />}
+            {(q.status === "draft" || can(s.role, "finance.delete")) && <ConfirmAction trigger={<Button variant="ghost" size="icon" aria-label="Delete" className="text-muted-foreground hover:text-destructive"><Trash2 /></Button>} title={`Delete ${q.number}?`} description="This permanently deletes the quotation." action={deleteQuotation.bind(null, id)} redirectTo="/quotations" />}
           </>}
         </>}
       />

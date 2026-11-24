@@ -112,7 +112,7 @@ export default async function ProjectWorkspace({ params, searchParams }: PagePro
           </div>
           {manage && can(session.role, "projects.delete") && (
             <div className="flex justify-end">
-              <ConfirmAction trigger={<Button variant="ghost" className="text-destructive"><Trash2 /> Delete project</Button>} title={`Delete ${project.name}?`} description="Deletes the project with all deliverables, tasks, milestones and file records. Projects with issued invoices can't be deleted." action={deleteProject.bind(null, id)} />
+              <ConfirmAction trigger={<Button variant="ghost" className="text-destructive"><Trash2 /> Delete project</Button>} title={`Delete ${project.name}?`} description="Deletes the project with all deliverables, tasks, milestones and file records. Projects with issued invoices can't be deleted." action={deleteProject.bind(null, id)} redirectTo="/projects" />
             </div>
           )}
         </div>

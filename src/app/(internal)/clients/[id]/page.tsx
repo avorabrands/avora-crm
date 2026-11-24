@@ -77,7 +77,7 @@ export default async function ClientPage({ params, searchParams }: PageProps<"/c
 
       {tab === "overview" && can(session.role, "clients.delete") && (
         <div className="mt-8 flex justify-end">
-          <ConfirmAction trigger={<Button variant="ghost" className="text-destructive">Delete client</Button>} title={`Delete ${client.company_name}?`} description="Only clients without projects can be deleted. This removes the client, contacts and portal access permanently." action={deleteClientRecord.bind(null, id)} />
+          <ConfirmAction trigger={<Button variant="ghost" className="text-destructive">Delete client</Button>} title={`Delete ${client.company_name}?`} description="Only clients without projects can be deleted. This removes the client, contacts and portal access permanently." action={deleteClientRecord.bind(null, id)} redirectTo="/clients" />
         </div>
       )}
     </>
