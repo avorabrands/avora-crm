@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/app/password-input";
 import { ActionForm, Field, SubmitButton } from "@/components/app/form";
 import { signIn } from "@/features/auth/actions";
 
@@ -13,7 +14,7 @@ export function LoginForm({ next }: { next?: string }) {
         <Input id="email" name="email" type="email" autoComplete="email" required placeholder="you@avorabrands.com" />
       </Field>
       <Field name="password" label="Password">
-        <Input id="password" name="password" type="password" autoComplete="current-password" required />
+        <PasswordInput id="password" name="password" autoComplete="current-password" required />
       </Field>
       <div className="flex justify-end">
         <Link href="/forgot-password" className="text-xs text-primary hover:underline">Forgot password?</Link>
