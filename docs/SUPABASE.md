@@ -20,6 +20,7 @@ In **SQL Editor**, run each file in `supabase/migrations/` **in filename order**
 12. `…0012_lead_role.sql` – new membership role `lead`
 13. `…0013_lead_logins.sql` – lead sign-ins see only their sent quotations (view / accept / decline); converting the lead turns the login into a client login
 14. `…0014_main_admin.sql` – one main admin per workspace (`is_owner`); only the main admin can add/remove/enable/disable admins or change the main admin
+15. `…0015_completed_progress.sql` – a Completed project is always 100%; reopening recalculates from deliverables/tasks
 
 (With the Supabase CLI: `supabase link` then `supabase db push`.)
 
@@ -27,7 +28,7 @@ Verify locally any time with `npm run test:db` (no Supabase needed).
 
 **Test data:** run `supabase/seed.sql` in the SQL editor (no service-role key needed) or `npm run seed`. Dev/staging only.
 
-The current project is **avora-crm** (`xorfhfhxpfignobisuku`, ap-south-1); migrations 0001–0014 are applied (demo data removed).
+The current project is **avora-crm** (`xorfhfhxpfignobisuku`, ap-south-1); migrations 0001–0015 are applied (demo data removed).
 
 ## 3. Auth settings
 - **Authentication → Providers → Email**: enable email/password. Disable public sign-ups (**"Allow new users to sign up" → off**) — users are invited by an admin.

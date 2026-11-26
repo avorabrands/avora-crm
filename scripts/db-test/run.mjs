@@ -418,6 +418,19 @@ await as("coadmin", async () => {
 });
 check("main admin still there", (await one(`select count(*)::int n from organization_members where user_id=$1`, [ids.admin])).n === 1);
 
+
+console.log("\nCompleted projects show 100%");
+await as("manager", async () => {
+  const P = await one(`insert into projects (organization_id, name, client_id, manager_id, created_by) values ($1,'Done project',$2,$3,$3) returning id`, [ids.org, ids.cB, ids.manager]);
+  check("new project starts at 0%", (await one(`select progress from projects where id=$1`, [P.id])).progress === 0);
+  await db.query(`update projects set status='completed' where id=$1`, [P.id]);
+  check("marking it Completed sets 100%", (await one(`select progress, completed_at is not null c from projects where id=$1`, [P.id])).progress === 100);
+  await db.query(`insert into tasks (organization_id, project_id, title, created_by) values ($1,$2,'late task',$3)`, [ids.org, P.id, ids.manager]);
+  check("adding work to a completed project keeps 100%", (await one(`select progress from projects where id=$1`, [P.id])).progress === 100);
+  await db.query(`update projects set status='in_progress' where id=$1`, [P.id]);
+  check("reopening recalculates (0 of 1 task done = 0%)", (await one(`select progress from projects where id=$1`, [P.id])).progress === 0);
+});
+
 console.log("\nReminders");
 await db.query(`update tasks set due_date = current_date - 1, status='todo' where id=$1`, [ids.task]);
 await db.query(`update invoices set status='unpaid' where id=$1`, [inv.id]).catch(() => {});
