@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Field, FormDialog, NativeSelect, type FormAction } from "@/components/app/form";
 import { RowActions } from "@/components/app/row-actions";
 import { ROLES } from "@/lib/constants";
-import { addTeamMember } from "./actions";
+import { addTeamMember, removeTeamMember } from "./actions";
 import { LoginFields, SetPasswordButton } from "./login-fields";
 
 const STAFF_ROLES = ROLES.options.filter((r) => r.value !== "client" && r.value !== "lead");
@@ -48,13 +48,18 @@ export function AddMemberButton({ viewerIsOwner }: { viewerIsOwner: boolean }) {
   return <FormDialog trigger={<Button><Plus /> Add employee</Button>} title="Add employee" description="Creates their sign-in for the CRM. Their role decides what they can see." action={addTeamMember} submitLabel="Create sign-in" size="lg"><Fields viewerIsOwner={viewerIsOwner} /></FormDialog>;
 }
 
-export function EditMember({ m, action, viewerIsOwner }: { m: MemberRow; action: FormAction; viewerIsOwner: boolean }) {
+export function EditMember({ m, action, viewerIsOwner, isSelf }: { m: MemberRow; action: FormAction; viewerIsOwner: boolean; isSelf?: boolean }) {
   // co-admins can't touch the main admin at all
   if (m.is_owner && !viewerIsOwner) return <span className="text-xs text-muted-foreground">Main admin</span>;
+  // the main admin and yourself can't be deleted; only the main admin deletes co-admins
+  const canDelete = !m.is_owner && !isSelf && (m.role !== "admin" || viewerIsOwner);
   return (
     <div className="flex items-center justify-end gap-1">
       <SetPasswordButton memberId={m.id} name={m.profile?.full_name} email={m.profile?.email} />
-      <RowActions editAs="dialog" editTitle={`Edit ${m.profile?.full_name ?? "member"}`} edit={action} editForm={<Fields m={m} viewerIsOwner={viewerIsOwner} />} />
+      <RowActions editAs="dialog" editTitle={`Edit ${m.profile?.full_name ?? "member"}`} edit={action} editForm={<Fields m={m} viewerIsOwner={viewerIsOwner} />}
+        onDelete={canDelete ? () => removeTeamMember(m.id) : undefined}
+        deleteTitle={`Delete ${m.profile?.full_name || m.profile?.email || "this employee"}?`}
+        deleteDescription="Their sign-in is deleted and they lose access immediately. Tasks and deliverables assigned to them become unassigned; projects, invoices and other records they created stay. This can't be undone — to pause access instead, edit them and set status to Inactive." />
     </div>
   );
 }

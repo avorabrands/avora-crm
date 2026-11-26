@@ -394,6 +394,30 @@ await as("admin", async () => {
   check("main admin can't give away is_owner via the API", (await tryq(`update organization_members set is_owner=false where user_id=$1`, [ids.admin])) !== "ok");
 });
 
+
+console.log("\nDeleting an employee");
+await user("leaver", "leaver@x.in");
+await db.query(`insert into organization_members (organization_id, user_id, role) values ($1,$2,'team_member')`, [ids.org, ids.leaver]);
+await db.query(`insert into project_members (project_id, user_id, organization_id) values ($1,$2,$3)`, [ids.pA, ids.leaver, ids.org]);
+const lt = await one(`insert into tasks (organization_id, project_id, title, assigned_to, created_by) values ($1,$2,'Leaver task',$3,$3) returning id`, [ids.org, ids.pA, ids.leaver]);
+await db.query(`update deliverables set assigned_to=$1 where id=$2`, [ids.leaver, ids.d4]);
+await db.query(`insert into notifications (organization_id, user_id, type, title) values ($1,$2,'task_assigned','x')`, [ids.org, ids.leaver]).catch(() => {});
+// the server action deletes the auth user with the service role (here: superuser)
+check("deleting the sign-in succeeds", (await tryq(`delete from auth.users where id=$1`, [ids.leaver])) === "ok");
+check("membership and profile are gone", (await one(`select (select count(*) from organization_members where user_id=$1)::int + (select count(*) from profiles where id=$1)::int n`, [ids.leaver])).n === 0);
+const after = await one(`select assigned_to, created_by from tasks where id=$1`, [lt.id]);
+check("their task stays, now unassigned", after && after.assigned_to === null && after.created_by === null, after);
+check("their deliverable stays, now unassigned", (await one(`select assigned_to from deliverables where id=$1`, [ids.d4])).assigned_to === null);
+check("project membership removed, project kept", (await one(`select (select count(*) from project_members where user_id=$1)::int m, (select count(*) from projects where id=$2)::int p`, [ids.leaver, ids.pA])).p === 1);
+await db.query(`update organization_members set status='active' where user_id=$1`, [ids.coadmin]);
+await as("coadmin", async () => {
+  const r = await tryq(`delete from organization_members where user_id=$1`, [ids.admin]);
+  check("co-admin can't delete the main admin via API", String(r).includes("main admin"), r);
+  const r2 = await tryq(`delete from organization_members where user_id=$1 returning id`, [ids.designer2]);
+  check("co-admin can remove a team member's membership", r2 === "ok", r2);
+});
+check("main admin still there", (await one(`select count(*)::int n from organization_members where user_id=$1`, [ids.admin])).n === 1);
+
 console.log("\nReminders");
 await db.query(`update tasks set due_date = current_date - 1, status='todo' where id=$1`, [ids.task]);
 await db.query(`update invoices set status='unpaid' where id=$1`, [inv.id]).catch(() => {});

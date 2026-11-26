@@ -81,3 +81,25 @@ export async function setPasswordForMember(orgId: string, memberId: string, pass
   if (error) throw { code: "AUTH", message: error.message };
   return (m.profile as unknown as { email: string } | null)?.email ?? "this person";
 }
+
+/**
+ * Removes someone from the workspace. If this was their only workspace their sign-in is deleted too
+ * (their name disappears; tasks/deliverables become unassigned; records they created stay).
+ * Caller MUST have checked: admin, not themselves, not the main admin, only the main admin removes admins.
+ */
+export async function removeMember(orgId: string, memberId: string) {
+  const db = admin();
+  const { data: m } = await db.from("organization_members").select("id, user_id, role, is_owner, profile:profiles(email, full_name)").eq("id", memberId).eq("organization_id", orgId).maybeSingle();
+  if (!m) throw { code: "P0002", message: "That person wasn't found." };
+  if (m.is_owner) throw { code: "42501", message: "The main admin can't be deleted." };
+  const { count } = await db.from("organization_members").select("id", { count: "exact", head: true }).eq("user_id", m.user_id).neq("id", m.id);
+  if (count) {
+    const { error } = await db.from("organization_members").delete().eq("id", m.id);
+    if (error) throw error;
+  } else {
+    const { error } = await db.auth.admin.deleteUser(m.user_id as string); // cascades to profile + membership
+    if (error) throw { code: "AUTH", message: error.message };
+  }
+  const p = m.profile as unknown as { email: string; full_name: string | null } | null;
+  return p?.full_name || p?.email || "Employee";
+}

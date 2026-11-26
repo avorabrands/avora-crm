@@ -67,7 +67,7 @@ export default async function TeamPage() {
                     <TableCell label="Done (30 days)" className="text-center tabular-nums">{st.done30}</TableCell>
                     <TableCell label="Activity (30 days)" className="text-center tabular-nums">{st.activity}</TableCell>
                     <TableCell label="Status"><Pill tone={m.status === "active" ? "green" : "slate"}>{m.status}</Pill></TableCell>
-                    {admin && <TableCell actions className="pr-4"><EditMember m={m} viewerIsOwner={s.isOwner} action={updateTeamMember.bind(null, m.id)} /></TableCell>}
+                    {admin && <TableCell actions className="pr-4"><EditMember m={m} viewerIsOwner={s.isOwner} isSelf={m.id === s.memberId} action={updateTeamMember.bind(null, m.id)} /></TableCell>}
                   </TableRow>
                 );
               })}

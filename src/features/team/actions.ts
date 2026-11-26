@@ -5,7 +5,7 @@ import { z } from "zod";
 import { authorizeStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { fail, formToObject, ok, toActionError, unwrap, zDate, zRequired, zText, type ActionState } from "@/lib/actions";
-import { inviteUser, setPasswordForMember } from "./invite";
+import { inviteUser, removeMember, setPasswordForMember } from "./invite";
 import { parseLogin, passwordSchema } from "./login-schema";
 
 const staffRoles = ["admin", "manager", "team_member"] as const;
@@ -58,5 +58,20 @@ export async function setMemberPassword(memberId: string, _: ActionState, fd: Fo
     if (!password.success) return fail(password.error.issues[0].message, { password: password.error.issues[0].message });
     const email = await setPasswordForMember(s.orgId, memberId, password.data, s.isOwner);
     return ok(`New password set for ${email}. Share it with them securely.`);
+  } catch (e) { return toActionError(e); }
+}
+
+/** Delete an employee: removes their access and sign-in. Admin only; the main admin can't be deleted; only the main admin deletes admins. */
+export async function removeTeamMember(memberId: string): Promise<ActionState> {
+  try {
+    const s = await authorizeStaff("team.manage");
+    if (memberId === s.memberId) return fail("You can't delete yourself.");
+    const supabase = await createClient();
+    const target = unwrap(await supabase.from("organization_members").select("role, is_owner").eq("id", memberId).in("role", staffRoles).single());
+    if (target.is_owner) return fail("The main admin can't be deleted.");
+    if (target.role === "admin" && !s.isOwner) return fail("Only the main admin can delete co-admins.");
+    const name = await removeMember(s.orgId, memberId);
+    revalidatePath("/team");
+    return ok(`${name} deleted from the team`);
   } catch (e) { return toActionError(e); }
 }
