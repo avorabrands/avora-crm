@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { Wallet } from "lucide-react";
+import Link from "next/link";
+import { Plus, Wallet } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { requireStaff } from "@/lib/auth/session";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
@@ -27,6 +29,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/payment
   const [{ rows, total, params }, clients, invoices, { data: all }] = await Promise.all([listPayments(sp), clientOptions(), openInvoiceOptions(), supabase.from("payments").select("amount, payment_date, payment_type")]);
   const sum = (f: (p: { amount: number; payment_date: string; payment_type: string }) => boolean) => (all ?? []).filter(f).reduce((a, p) => a + Number(p.amount), 0);
   const record = can(s.role, "finance.manage") ? <RecordPaymentButton invoices={invoices} clients={clients} /> : null;
+  const openRecord = record && <Button render={<Link href="/payments?new=payment" scroll={false} />}><Plus /> Record payment</Button>;
   return (
     <>
       <PageHeader title="Payments" description="Manual payment records — advances, milestones, partial and final payments. Each one gets a printable receipt." breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Payments" }]} actions={record} />
@@ -38,7 +41,7 @@ export default async function PaymentsPage({ searchParams }: PageProps<"/payment
       </div>
       <Panel bodyClassName="p-0">
         <TableToolbar sorts={[{ value: "payment_date:desc", label: "Newest first" }, { value: "amount:desc", label: "Largest amount" }]} placeholder="Search receipt, UTR, reference…" filters={[{ name: "client", label: "Client", options: clients }, { name: "method", label: "Method", options: PAYMENT_METHOD.options }, { name: "type", label: "Type", options: PAYMENT_TYPE.options }]} />
-        {rows.length ? <><PaymentsTable rows={rows} actions={can(s.role, "finance.delete") ? (p) => <RowActions onDelete={deletePayment.bind(null, p.id)} deleteTitle={`Delete ${p.receipt_number}?`} deleteDescription="The linked invoice balance will be recalculated. This cannot be undone." /> : undefined} /><Pagination total={total} pageSize={params.pageSize} /></> : <EmptyState icon={Wallet} title="No payments recorded" action={record} />}
+        {rows.length ? <><PaymentsTable rows={rows} actions={can(s.role, "finance.delete") ? (p) => <RowActions onDelete={deletePayment.bind(null, p.id)} deleteTitle={`Delete ${p.receipt_number}?`} deleteDescription="The linked invoice balance will be recalculated. This cannot be undone." /> : undefined} /><Pagination total={total} pageSize={params.pageSize} /></> : <EmptyState icon={Wallet} title="No payments recorded" action={openRecord} />}
       </Panel>
     </>
   );

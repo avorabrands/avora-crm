@@ -56,7 +56,13 @@ export function SubmitButton({ children = "Save", className, variant }: { childr
 export function ActionForm({ action, children, onSuccess, className, resetOnSuccess = false, successToast = true }: {
   action: FormAction; children: React.ReactNode; onSuccess?: (state: FormActionState) => void; className?: string; resetOnSuccess?: boolean; successToast?: boolean;
 }) {
-  const [state, formAction, isPending] = useActionState(action, { ok: false } as FormActionState);
+  // Toast as soon as the server answers — even if a refresh unmounts this form before its effects run.
+  const [state, formAction, isPending] = useActionState(async (prev: FormActionState, fd: FormData) => {
+    const r = await action(prev, fd);
+    if (r.ok) { if (successToast && r.message) toast.success(r.message); }
+    else if (r.message) toast.error(r.message);
+    return r;
+  }, { ok: false } as FormActionState);
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const handled = useRef<number | undefined>(undefined);
@@ -65,14 +71,11 @@ export function ActionForm({ action, children, onSuccess, className, resetOnSucc
     if (!state.ts || handled.current === state.ts) return;
     handled.current = state.ts;
     if (state.ok) {
-      if (successToast && state.message) toast.success(state.message);
       if (resetOnSuccess) formRef.current?.reset();
       router.refresh();
       onSuccess?.(state);
-    } else if (state.message) {
-      toast.error(state.message);
     }
-  }, [state, router, onSuccess, resetOnSuccess, successToast]);
+  }, [state, router, onSuccess, resetOnSuccess]);
 
   return (
     <FieldErrors.Provider value={state.ok ? undefined : state.fieldErrors}>

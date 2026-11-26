@@ -33,6 +33,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/clients"
       <ClientFields staff={staff} />
     </FormSheet>
   ) : null;
+  const openAdd = add && <Button render={<Link href="/clients?new=client" scroll={false} />}><Plus /> Add client</Button>;
 
   return (
     <>
@@ -43,7 +44,7 @@ export default async function ClientsPage({ searchParams }: PageProps<"/clients"
           { name: "category", label: "Category", options: CLIENT_CATEGORIES.map((c) => ({ value: c, label: c })) },
           { name: "manager", label: "Manager", options: staff },
         ]} />
-        {rows.length === 0 ? <EmptyState icon={Building2} title={params.q ? "No clients match" : "No clients yet"} description="Add a client or convert a won lead." action={add} /> : (
+        {rows.length === 0 ? <EmptyState icon={Building2} title={params.q ? "No clients match" : "No clients yet"} description="Add a client or convert a won lead." action={openAdd} /> : (
           <>
             <Table>
               <TableHeader><TableRow>

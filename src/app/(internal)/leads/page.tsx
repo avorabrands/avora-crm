@@ -37,6 +37,8 @@ export default async function LeadsPage({ searchParams }: PageProps<"/leads">) {
       <LeadFields staff={staff} />
     </FormSheet>
   ) : null;
+  // empty states open the header form above (one form per page, so ?new=lead can't open two)
+  const openNewLead = canManage ? <Button render={<Link href="/leads?new=lead" scroll={false} />}><Plus /> Add lead</Button> : null;
 
   return (
     <>
@@ -59,9 +61,9 @@ export default async function LeadsPage({ searchParams }: PageProps<"/leads">) {
           ]}
         />
         {board ? (
-          <div className="p-3">{rows.length ? <LeadsBoard leads={rows} /> : <EmptyState icon={Target} title="No leads match" description="Try clearing filters or add a new lead." action={newLead} />}</div>
+          <div className="p-3">{rows.length ? <LeadsBoard leads={rows} /> : <EmptyState icon={Target} title="No leads match" description="Try clearing filters or add a new lead." action={openNewLead} />}</div>
         ) : rows.length === 0 ? (
-          <EmptyState icon={Target} title={params.q ? "No leads match your search" : "No leads yet"} description="Leads you add or receive will show up here." action={newLead} />
+          <EmptyState icon={Target} title={params.q ? "No leads match your search" : "No leads yet"} description="Leads you add or receive will show up here." action={openNewLead} />
         ) : (
           <>
             <Table>

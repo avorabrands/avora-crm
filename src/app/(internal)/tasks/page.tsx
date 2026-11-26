@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { format } from "date-fns";
+import Link from "next/link";
 import { CheckSquare, Plus } from "lucide-react";
 import { requireStaff } from "@/lib/auth/session";
 import { can } from "@/lib/auth/permissions";
@@ -39,6 +40,7 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
       <TaskFields staff={staff} projects={projects} deliverables={deliverables} canApprove={canApprove} />
     </FormSheet>
   );
+  const openAdd = <Button render={<Link href="/tasks?new=task" scroll={false} />}><Plus /> New task</Button>;
 
   return (
     <>
@@ -60,7 +62,7 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
           { name: "overdue", label: "Due", options: [{ value: "1", label: "Overdue only" }] },
         ]} />
         {view === "calendar" ? <TaskCalendar tasks={rows} month={month} />
-          : rows.length === 0 ? <EmptyState icon={CheckSquare} title="No tasks found" description={projects.length ? "Create a task or adjust the filters." : "Create a project first, then add tasks to it."} action={projects.length ? add : undefined} />
+          : rows.length === 0 ? <EmptyState icon={CheckSquare} title="No tasks found" description={projects.length ? "Create a task or adjust the filters." : "Create a project first, then add tasks to it."} action={projects.length ? openAdd : undefined} />
           : view === "board" ? <div className="p-3"><TaskBoard tasks={rows} canApprove={canApprove} /></div>
           : <><TaskTable rows={rows} canApprove={canApprove} /><Pagination total={total} pageSize={params.pageSize} /></>}
       </Panel>
