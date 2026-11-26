@@ -18,7 +18,7 @@ export default async function NewInvoice({ searchParams }: PageProps<"/invoices/
   return (
     <>
       <PageHeader title="New invoice" description="Saved as a draft. Issue it when ready — then it appears in the client portal." breadcrumbs={[{ label: "Invoices", href: "/invoices" }, { label: "New" }]} />
-      <InvoiceEditor action={saveInvoice.bind(null, null)} cancelHref="/invoices" {...d} defaultProjectId={project ?? undefined}
+      <InvoiceEditor action={saveInvoice.bind(null, null)} cancelHref="/invoices" {...d} defaultTemplate={d.invoiceTemplate} defaultProjectId={project ?? undefined}
         inv={client ? { client_id: client, project_id: project, milestone_id: null, invoice_date: daysFromTodayISO(0), due_date: daysFromTodayISO(15), tax_mode: suggestTaxMode(d.companyState, d.clients.find((c) => c.value === client)?.state), notes: null, terms: d.settings?.default_terms ?? null } : undefined} />
     </>
   );

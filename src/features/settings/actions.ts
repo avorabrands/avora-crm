@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { DOCUMENT_TEMPLATES } from "@/lib/doc-templates";
 import { z } from "zod";
 import { authorize, authorizeStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -35,6 +36,8 @@ const taxSchema = z.object({
   receipt_prefix: z.string().trim().regex(/^[A-Z0-9]{1,8}$/, "1–8 capital letters/digits"),
   default_payment_terms: zText(2000),
   default_terms: zText(10000),
+  quotation_template: z.enum(DOCUMENT_TEMPLATES).catch("classic"),
+  invoice_template: z.enum(DOCUMENT_TEMPLATES).catch("classic"),
 });
 
 export async function saveBilling(_: ActionState, fd: FormData): Promise<ActionState> {

@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { companySettings, projectOptions } from "@/features/common/lookups";
+import { asTemplate } from "@/lib/doc-templates";
 
 /** Everything the quotation/invoice editors need, loaded in parallel. */
 export async function editorData(orgId: string) {
@@ -21,5 +22,7 @@ export async function editorData(orgId: string) {
     taxRates: (settings?.tax_rates ?? [{ label: "GST 18%", rate: 18 }]) as { label: string; rate: number }[],
     defaultRate: Number(settings?.default_tax_rate ?? 18),
     companyState: settings?.state ?? null,
+    quotationTemplate: asTemplate(settings?.quotation_template),
+    invoiceTemplate: asTemplate(settings?.invoice_template),
   };
 }

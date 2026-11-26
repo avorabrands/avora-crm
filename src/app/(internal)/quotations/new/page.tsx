@@ -18,7 +18,7 @@ export default async function NewQuotation({ searchParams }: PageProps<"/quotati
   return (
     <>
       <PageHeader title="New quotation" description="Numbering, totals and GST are calculated automatically." breadcrumbs={[{ label: "Quotations", href: "/quotations" }, { label: "New" }]} />
-      <QuotationEditor action={saveQuotation.bind(null, null)} cancelHref="/quotations" {...d}
+      <QuotationEditor action={saveQuotation.bind(null, null)} cancelHref="/quotations" {...d} defaultTemplate={d.quotationTemplate}
         q={(client || project || lead) ? { client_id: client, lead_id: lead, project_id: project, title: "", description: null, issue_date: new Date().toISOString().slice(0, 10), valid_until: null, tax_mode: suggestTaxMode(d.companyState, d.clients.find((c) => c.value === client)?.state), payment_terms: d.settings?.default_payment_terms ?? null, terms: d.settings?.default_terms ?? null, notes: null } : undefined} />
     </>
   );

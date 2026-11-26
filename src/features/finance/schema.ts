@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DOCUMENT_TEMPLATES } from "@/lib/doc-templates";
 import { PAYMENT_METHOD, PAYMENT_TYPE, TAX_MODE } from "@/lib/constants";
 import { parseAmount } from "@/lib/tax";
 import { zDate, zEnum, zRequired, zText, zUuid } from "@/lib/actions";
@@ -15,6 +16,8 @@ export const lineItemSchema = z.object({
   tax_rate: z.coerce.number().min(0).max(100).default(0),
 });
 
+const template = z.enum(DOCUMENT_TEMPLATES).catch("classic");
+
 const items = z.preprocess((v) => { try { return JSON.parse(String(v ?? "[]")); } catch { return []; } },
   z.array(lineItemSchema).min(1, "Add at least one line item").max(200));
 
@@ -30,6 +33,7 @@ export const quotationSchema = z.object({
   payment_terms: zText(2000),
   terms: zText(10000),
   notes: zText(5000),
+  template,
   items,
 }).refine((v) => v.client_id || v.lead_id, { message: "Choose a client", path: ["client_id"] })
   .refine((v) => !v.valid_until || v.valid_until >= v.issue_date, { message: "Validity must be after the issue date", path: ["valid_until"] });
@@ -43,6 +47,7 @@ export const invoiceSchema = z.object({
   tax_mode: zEnum(TAX_MODE.values, "Tax mode"),
   notes: zText(5000),
   terms: zText(10000),
+  template,
   items,
 }).refine((v) => v.due_date >= v.invoice_date, { message: "Due date must be on or after the invoice date", path: ["due_date"] });
 

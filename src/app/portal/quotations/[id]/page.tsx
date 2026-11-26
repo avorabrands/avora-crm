@@ -26,7 +26,7 @@ export default async function PortalQuotation({ params }: PageProps<"/portal/quo
       <PageHeader title={q.number} description={q.title} breadcrumbs={[{ label: "Quotations", href: "/portal/quotations" }, { label: q.number }]} meta={<StatusBadge def={QUOTATION_STATUS} value={q.status} />}
         actions={<Button variant="outline" render={<Link href={`/print/quotation/${id}`} />}><Download /> Download PDF</Button>} />
       {open && <div className="mx-auto mb-6 max-w-4xl rounded-xl border bg-card p-4"><p className="mb-3 text-sm">Valid until <strong>{formatDate(q.valid_until)}</strong>. Ready to go ahead?</p><QuotationResponse action={respondToQuotation.bind(null, id)} /></div>}
-      <FinanceDocument kind="Quotation" number={q.number} title={q.title} company={company} party={me} items={items} taxMode={q.tax_mode}
+      <FinanceDocument template={q.template} kind="Quotation" number={q.number} title={q.title} company={company} party={me} items={items} taxMode={q.tax_mode}
         meta={[{ label: "Date", value: formatDate(q.issue_date) }, { label: "Valid until", value: formatDate(q.valid_until) }]} totals={q} notes={q.description} terms={q.terms} paymentTerms={q.payment_terms} />
     </>
   );

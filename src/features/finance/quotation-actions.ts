@@ -6,6 +6,7 @@ import { authorizeStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { fail, formToObject, ok, toActionError, unwrap, type ActionState } from "@/lib/actions";
 import { logActivity } from "@/lib/activity";
+import { asTemplate } from "@/lib/doc-templates";
 import { QUOTATION_STATUS } from "@/lib/constants";
 import { quotationSchema } from "./schema";
 
@@ -81,7 +82,7 @@ export async function quotationToInvoice(id: string): Promise<ActionState> {
     const q = unwrap(await supabase.from("quotations").select("*, quotation_items(*)").eq("id", id).single());
     if (!q.client_id) return fail("Convert the lead to a client before invoicing.");
     const inv = unwrap(await supabase.from("invoices").insert({
-      organization_id: s.orgId, client_id: q.client_id, project_id: q.project_id, quotation_id: q.id, tax_mode: q.tax_mode,
+      organization_id: s.orgId, client_id: q.client_id, project_id: q.project_id, quotation_id: q.id, tax_mode: q.tax_mode, template: q.template,
       terms: q.payment_terms, notes: `Against quotation ${q.number}`, created_by: s.userId,
     }).select("id, number").single());
     invoiceId = inv.id;
@@ -91,4 +92,15 @@ export async function quotationToInvoice(id: string): Promise<ActionState> {
     revalidatePath("/invoices");
   } catch (e) { return toActionError(e); }
   redirect(`/invoices/${invoiceId}`);
+}
+
+/** Change only the print layout — allowed at any status, it never touches amounts. */
+export async function setQuotationTemplate(id: string, template: string): Promise<ActionState> {
+  try {
+    await authorizeStaff("finance.manage");
+    const supabase = await createClient();
+    unwrap(await supabase.from("quotations").update({ template: asTemplate(template) }).eq("id", id).select("id").single());
+    revalidatePath(`/quotations/${id}`); revalidatePath(`/print/quotation/${id}`); revalidatePath(`/portal/quotations/${id}`);
+    return ok("Template updated");
+  } catch (e) { return toActionError(e); }
 }

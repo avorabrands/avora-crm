@@ -14,8 +14,9 @@ import { ConfirmAction } from "@/components/app/confirm";
 import { RowActions } from "@/components/app/row-actions";
 import { companySettings } from "@/features/common/lookups";
 import { getInvoice } from "@/features/finance/queries";
-import { cancelInvoice, deleteInvoice, deletePayment, issueInvoice } from "@/features/finance/invoice-actions";
+import { cancelInvoice, deleteInvoice, deletePayment, issueInvoice, setInvoiceTemplate } from "@/features/finance/invoice-actions";
 import { FinanceDocument } from "@/features/finance/components/document";
+import { TemplatePicker } from "@/features/finance/components/template-picker";
 import { PaymentsTable } from "@/features/finance/components/finance-tables";
 import { RecordPaymentButton } from "@/features/finance/components/record-payment";
 
@@ -49,8 +50,9 @@ export default async function InvoicePage({ params }: PageProps<"/invoices/[id]"
           </>}
         </>}
       />
+      {manage && <TemplatePicker key={inv.template} value={inv.template} save={setInvoiceTemplate.bind(null, id)} className="mx-auto mb-3 max-w-4xl" />}
       <div className="space-y-6">
-        <FinanceDocument kind="Tax Invoice" number={inv.number} title={inv.project?.name} company={company} party={inv.client} items={items} taxMode={inv.tax_mode}
+        <FinanceDocument template={inv.template} kind="Tax Invoice" number={inv.number} title={inv.project?.name} company={company} party={inv.client} items={items} taxMode={inv.tax_mode}
           meta={[{ label: "Invoice date", value: formatDate(inv.invoice_date) }, { label: "Due date", value: formatDate(inv.due_date) }, ...(inv.quotation ? [{ label: "Quotation", value: inv.quotation.number }] : [])]}
           totals={inv} notes={inv.notes} terms={inv.terms ?? company?.default_terms} />
         <Panel className="mx-auto max-w-4xl" title="Payments" description={`${formatINR(inv.amount_paid)} of ${formatINR(inv.total)} received`} bodyClassName="p-0">

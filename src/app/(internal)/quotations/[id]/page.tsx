@@ -12,8 +12,9 @@ import { StatusBadge } from "@/components/app/status-badge";
 import { ConfirmAction } from "@/components/app/confirm";
 import { companySettings } from "@/features/common/lookups";
 import { getQuotation } from "@/features/finance/queries";
-import { deleteQuotation, duplicateQuotation, quotationToInvoice, setQuotationStatus } from "@/features/finance/quotation-actions";
+import { deleteQuotation, duplicateQuotation, quotationToInvoice, setQuotationStatus, setQuotationTemplate } from "@/features/finance/quotation-actions";
 import { FinanceDocument } from "@/features/finance/components/document";
+import { TemplatePicker } from "@/features/finance/components/template-picker";
 
 export const metadata: Metadata = { title: "Quotation" };
 
@@ -55,7 +56,8 @@ export default async function QuotationPage({ params }: PageProps<"/quotations/[
         </>}
       />
       {q.lead && !q.client_id && <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">This quotation is for lead <strong>{q.lead.company_name}</strong>. Convert the lead to a client to share it via the portal or invoice it.</p>}
-      <FinanceDocument kind="Quotation" number={q.number} title={q.title} company={company} party={q.client ?? (q.lead ? { company_name: q.lead.company_name } : null)} items={items} taxMode={q.tax_mode}
+      {manage && <TemplatePicker key={q.template} value={q.template} save={setQuotationTemplate.bind(null, id)} className="mx-auto mb-3 max-w-4xl" />}
+      <FinanceDocument template={q.template} kind="Quotation" number={q.number} title={q.title} company={company} party={q.client ?? (q.lead ? { company_name: q.lead.company_name } : null)} items={items} taxMode={q.tax_mode}
         meta={[{ label: "Date", value: formatDate(q.issue_date) }, { label: "Valid until", value: formatDate(q.valid_until) }, ...(q.project ? [{ label: "Project", value: q.project.code }] : [])]}
         totals={q} notes={q.description} terms={q.terms} paymentTerms={q.payment_terms} />
       {q.notes && <p className="mx-auto mt-4 max-w-4xl rounded-lg bg-muted/60 p-3 text-sm"><span className="font-medium">Internal notes:</span> {q.notes}</p>}

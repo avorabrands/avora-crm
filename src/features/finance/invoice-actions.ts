@@ -6,6 +6,7 @@ import { authorizeStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { fail, formToObject, ok, toActionError, unwrap, type ActionState } from "@/lib/actions";
 import { logActivity } from "@/lib/activity";
+import { asTemplate } from "@/lib/doc-templates";
 import { formatINR } from "@/lib/format";
 import { agreementSchema, invoiceSchema, paymentSchema } from "./schema";
 
@@ -129,5 +130,16 @@ export async function deleteAgreement(id: string): Promise<ActionState> {
     unwrap(await supabase.from("agreements").delete().eq("id", id).select("id").single());
     revalidatePath("/agreements");
     return ok("Agreement deleted");
+  } catch (e) { return toActionError(e); }
+}
+
+/** Change only the print layout — allowed at any status, it never touches amounts. */
+export async function setInvoiceTemplate(id: string, template: string): Promise<ActionState> {
+  try {
+    await authorizeStaff("finance.manage");
+    const supabase = await createClient();
+    unwrap(await supabase.from("invoices").update({ template: asTemplate(template) }).eq("id", id).select("id").single());
+    revalidatePath(`/invoices/${id}`); revalidatePath(`/print/invoice/${id}`); revalidatePath(`/portal/invoices/${id}`);
+    return ok("Template updated");
   } catch (e) { return toActionError(e); }
 }

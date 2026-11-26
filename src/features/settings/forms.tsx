@@ -1,5 +1,7 @@
 "use client";
 
+import { TemplateField } from "@/features/finance/components/template-picker";
+import { asTemplate } from "@/lib/doc-templates";
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -55,6 +57,8 @@ export function BillingForm({ s }: { s: CompanySettings | null }) {
       <p className="-mt-2 text-xs text-muted-foreground">Numbers look like INV-2026-0001 and restart each year. Changing a prefix only affects new documents.</p>
       <Field name="default_payment_terms" label="Default payment terms"><Textarea name="default_payment_terms" rows={2} defaultValue={s?.default_payment_terms ?? ""} /></Field>
       <Field name="default_terms" label="Default terms & conditions"><Textarea name="default_terms" rows={4} defaultValue={s?.default_terms ?? ""} /></Field>
+      <Field label="Default quotation template" hint="Used for new quotations. Each quotation can still pick its own."><TemplateField name="quotation_template" defaultValue={asTemplate(s?.quotation_template)} /></Field>
+      <Field label="Default invoice template" hint="Used for new invoices. Each invoice can still pick its own."><TemplateField name="invoice_template" defaultValue={asTemplate(s?.invoice_template)} /></Field>
       <div className="flex justify-end"><SubmitButton>Save billing settings</SubmitButton></div>
     </ActionForm>
   );

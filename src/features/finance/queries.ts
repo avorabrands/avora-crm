@@ -1,4 +1,5 @@
 import "server-only";
+import type { DocTemplate } from "@/lib/doc-templates";
 import { createClient } from "@/lib/supabase/server";
 import { ilikeTerm, listParams, str, type ResolvedParams } from "@/lib/list-params";
 import { todayISO } from "@/lib/format";
@@ -7,13 +8,13 @@ export type QuotationRow = {
   id: string; number: string; title: string; description: string | null; client_id: string | null; lead_id: string | null; project_id: string | null;
   issue_date: string; valid_until: string | null; status: string; tax_mode: string; subtotal: number; discount_total: number; tax_total: number; total: number;
   payment_terms: string | null; terms: string | null; notes: string | null; sent_at: string | null; viewed_at: string | null; responded_at: string | null;
-  client_response_note: string | null; created_at: string;
+  client_response_note: string | null; created_at: string; template: DocTemplate;
   client: { company_name: string; billing_address: string | null; gstin: string | null; state: string | null; contact_person: string | null; email: string | null } | null;
   lead: { company_name: string } | null; project: { name: string; code: string } | null;
 };
 export type ItemRow = { id: string; position: number; name: string; description: string | null; hsn_sac?: string | null; quantity: number; unit_price: number; discount_pct: number; tax_rate: number; line_total: number };
 
-const Q_SELECT = "id, number, title, description, client_id, lead_id, project_id, issue_date, valid_until, status, tax_mode, subtotal, discount_total, tax_total, total, payment_terms, terms, notes, sent_at, viewed_at, responded_at, client_response_note, created_at, client:clients(company_name, billing_address, gstin, state, contact_person, email), lead:leads(company_name), project:projects(name, code)";
+const Q_SELECT = "id, number, title, description, client_id, lead_id, project_id, issue_date, valid_until, status, tax_mode, subtotal, discount_total, tax_total, total, payment_terms, terms, notes, sent_at, viewed_at, responded_at, client_response_note, created_at, template, client:clients(company_name, billing_address, gstin, state, contact_person, email), lead:leads(company_name), project:projects(name, code)";
 
 export async function listQuotations(sp: ResolvedParams, fixed: { clientId?: string; projectId?: string } = {}) {
   const p = listParams(sp, ["created_at", "issue_date", "total", "number", "status"] as const, "created_at");
@@ -41,11 +42,11 @@ export async function getQuotation(id: string) {
 export type InvoiceRow = {
   id: string; number: string; client_id: string; project_id: string | null; quotation_id: string | null; milestone_id: string | null; invoice_date: string; due_date: string;
   status: string; tax_mode: string; subtotal: number; discount_total: number; tax_total: number; total: number; amount_paid: number; balance_due: number;
-  notes: string | null; terms: string | null; issued_at: string | null; created_at: string;
+  notes: string | null; terms: string | null; issued_at: string | null; created_at: string; template: DocTemplate;
   client: { company_name: string; billing_address: string | null; gstin: string | null; state: string | null; contact_person: string | null; email: string | null } | null;
   project: { name: string; code: string } | null; quotation: { number: string } | null;
 };
-const I_SELECT = "id, number, client_id, project_id, quotation_id, milestone_id, invoice_date, due_date, status, tax_mode, subtotal, discount_total, tax_total, total, amount_paid, balance_due, notes, terms, issued_at, created_at, client:clients(company_name, billing_address, gstin, state, contact_person, email), project:projects(name, code), quotation:quotations(number)";
+const I_SELECT = "id, number, client_id, project_id, quotation_id, milestone_id, invoice_date, due_date, status, tax_mode, subtotal, discount_total, tax_total, total, amount_paid, balance_due, notes, terms, issued_at, created_at, template, client:clients(company_name, billing_address, gstin, state, contact_person, email), project:projects(name, code), quotation:quotations(number)";
 
 export async function listInvoices(sp: ResolvedParams, fixed: { clientId?: string; projectId?: string } = {}) {
   const p = listParams(sp, ["created_at", "invoice_date", "due_date", "total", "balance_due", "number"] as const, "invoice_date");

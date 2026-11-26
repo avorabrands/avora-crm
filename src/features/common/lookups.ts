@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import type { DocTemplate } from "@/lib/doc-templates";
 
 export type Option = { value: string; label: string; sub?: string };
 
@@ -44,7 +45,7 @@ export type CompanySettings = {
   organization_id: string; company_name: string; legal_name: string | null; tagline: string | null; address: string | null; state: string | null;
   gstin: string | null; pan: string | null; email: string | null; phone: string | null; website: string | null; logo_path: string | null;
   currency: string; tax_rates: { label: string; rate: number }[]; default_tax_rate: number; quotation_prefix: string; invoice_prefix: string;
-  receipt_prefix: string; default_payment_terms: string | null; default_terms: string | null; bank_details: string | null;
+  receipt_prefix: string; quotation_template: DocTemplate; invoice_template: DocTemplate; default_payment_terms: string | null; default_terms: string | null; bank_details: string | null;
 };
 
 /** Supabase embeds come back as object | object[] | null depending on FK direction. */

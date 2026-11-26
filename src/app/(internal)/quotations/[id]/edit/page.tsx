@@ -19,7 +19,7 @@ export default async function EditQuotation({ params }: PageProps<"/quotations/[
   return (
     <>
       <PageHeader title={`Edit ${q.number}`} breadcrumbs={[{ label: "Quotations", href: "/quotations" }, { label: q.number, href: `/quotations/${id}` }, { label: "Edit" }]} />
-      <QuotationEditor action={saveQuotation.bind(null, id)} cancelHref={`/quotations/${id}`} {...d} q={{ ...q, tax_mode: q.tax_mode as TaxMode }}
+      <QuotationEditor action={saveQuotation.bind(null, id)} cancelHref={`/quotations/${id}`} {...d} defaultTemplate={d.quotationTemplate} q={{ ...q, tax_mode: q.tax_mode as TaxMode }}
         items={items.map((i) => ({ name: i.name, description: i.description, quantity: Number(i.quantity), unit_price: Number(i.unit_price), discount_pct: Number(i.discount_pct), tax_rate: Number(i.tax_rate) }))} />
     </>
   );

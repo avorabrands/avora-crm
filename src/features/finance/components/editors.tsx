@@ -11,8 +11,10 @@ import { suggestTaxMode, type LineItem, type TaxMode } from "@/lib/tax";
 import { daysFromTodayISO } from "@/lib/format";
 import type { Option } from "@/features/common/lookups";
 import { LineItemsEditor } from "./line-items-editor";
+import { TemplateField } from "./template-picker";
+import type { DocTemplate } from "@/lib/doc-templates";
 
-type Common = { action: FormAction; clients: (Option & { state?: string | null })[]; projects: (Option & { clientId: string })[]; taxRates: { label: string; rate: number }[]; defaultRate: number; companyState: string | null; cancelHref: string; items?: LineItem[] };
+type Common = { action: FormAction; clients: (Option & { state?: string | null })[]; projects: (Option & { clientId: string })[]; taxRates: { label: string; rate: number }[]; defaultRate: number; companyState: string | null; cancelHref: string; items?: LineItem[]; defaultTemplate?: DocTemplate };
 
 /** Picking a client suggests the GST treatment; it never touches the line items. */
 function useClientTax(clients: Common["clients"], companyState: string | null, initialClient: string, savedMode?: TaxMode) {
@@ -23,7 +25,7 @@ function useClientTax(clients: Common["clients"], companyState: string | null, i
   return { clientId, setClientId, mode, setMode };
 }
 
-export function QuotationEditor({ q, leads, ...p }: Common & { leads: Option[]; q?: { client_id: string | null; lead_id: string | null; project_id: string | null; title: string; description: string | null; issue_date: string; valid_until: string | null; tax_mode: TaxMode; payment_terms: string | null; terms: string | null; notes: string | null } }) {
+export function QuotationEditor({ q, leads, ...p }: Common & { leads: Option[]; q?: { client_id: string | null; lead_id: string | null; project_id: string | null; title: string; description: string | null; issue_date: string; valid_until: string | null; tax_mode: TaxMode; payment_terms: string | null; terms: string | null; notes: string | null; template?: DocTemplate } }) {
   const { clientId, setClientId, mode, setMode } = useClientTax(p.clients, p.companyState, q?.client_id ?? "", q?.tax_mode);
   const today = daysFromTodayISO(0);
   const in30 = daysFromTodayISO(30);
@@ -54,12 +56,13 @@ export function QuotationEditor({ q, leads, ...p }: Common & { leads: Option[]; 
           <Field name="notes" label="Internal notes" hint="Not printed on the PDF. Keep confidential remarks on the client profile — the client can access this record once sent."><Textarea name="notes" rows={2} defaultValue={q?.notes ?? ""} /></Field>
         </div>
       </Panel>
+      <Panel title="PDF template" description="How the quotation looks when printed, saved as PDF or opened by the client. You can change it later."><TemplateField defaultValue={q?.template ?? p.defaultTemplate ?? "classic"} /></Panel>
       <div className="flex justify-end gap-2"><Button variant="outline" render={<Link href={p.cancelHref} />}>Cancel</Button><SubmitButton>Save quotation</SubmitButton></div>
     </ActionForm>
   );
 }
 
-export function InvoiceEditor({ inv, milestones, ...p }: Common & { milestones: (Option & { projectId: string })[]; inv?: { client_id: string; project_id: string | null; milestone_id: string | null; invoice_date: string; due_date: string; tax_mode: TaxMode; notes: string | null; terms: string | null }; defaultProjectId?: string }) {
+export function InvoiceEditor({ inv, milestones, ...p }: Common & { milestones: (Option & { projectId: string })[]; inv?: { client_id: string; project_id: string | null; milestone_id: string | null; invoice_date: string; due_date: string; tax_mode: TaxMode; notes: string | null; terms: string | null; template?: DocTemplate }; defaultProjectId?: string }) {
   const { clientId, setClientId, mode, setMode } = useClientTax(p.clients, p.companyState, inv?.client_id ?? "", inv?.tax_mode);
   const [projectId, setProjectId] = useState(inv?.project_id ?? p.defaultProjectId ?? "");
   const today = daysFromTodayISO(0);
@@ -88,6 +91,7 @@ export function InvoiceEditor({ inv, milestones, ...p }: Common & { milestones: 
           <Field name="terms" label="Terms"><Textarea name="terms" rows={3} defaultValue={inv?.terms ?? ""} /></Field>
         </div>
       </Panel>
+      <Panel title="PDF template" description="How the invoice looks when printed, saved as PDF or opened by the client. You can change it later."><TemplateField defaultValue={inv?.template ?? p.defaultTemplate ?? "classic"} /></Panel>
       <div className="flex justify-end gap-2"><Button variant="outline" render={<Link href={p.cancelHref} />}>Cancel</Button><SubmitButton>Save invoice</SubmitButton></div>
     </ActionForm>
   );
