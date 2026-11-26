@@ -4,7 +4,7 @@ export type DocTemplate = (typeof DOCUMENT_TEMPLATES)[number];
 
 export const TEMPLATE_INFO: Record<DocTemplate, { label: string; description: string }> = {
   classic: { label: "Classic", description: "Clean and light, with a purple accent" },
-  modern: { label: "Modern", description: "Bold colour header and a highlighted total" },
+  modern: { label: "Modern", description: "Avora black and blue, with a highlighted total" },
   professional: { label: "Professional", description: "Boxed GST format with amount in words and signature" },
 };
 

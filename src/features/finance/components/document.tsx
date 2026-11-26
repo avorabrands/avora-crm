@@ -105,25 +105,26 @@ function docNumbers(items: ItemRow[], taxMode: string) {
   return { breakdown, taxable, amount, showHsn: items.some((i) => i.hsn_sac), showDisc: items.some((i) => Number(i.discount_pct) > 0), taxed: taxMode !== "none" };
 }
 
-const ACCENT = "#7047EB";
+/** Avora brand colours, taken from the logo. */
+const BRAND = { ink: "#01030A", blue: "#0A84E8", sky: "#5CB8FF", tint: "#EAF4FE" };
 const exact = "[print-color-adjust:exact] [-webkit-print-color-adjust:exact]";
 
-/** Bold colour header band, soft cards, highlighted total. */
+/** Brand layout: black header with the blue logo accent, soft cards, highlighted total. */
 function ModernLayout({ kind, number, title, company, party, meta, items, taxMode, totals, footer, notes, terms, paymentTerms }: DocProps) {
   const n = docNumbers(items, taxMode);
   const label = "text-[10px] font-semibold tracking-[0.14em] uppercase";
   return (
     <article className={`mx-auto max-w-4xl overflow-hidden rounded-2xl border bg-white text-[13px] text-slate-700 shadow-sm print:max-w-none print:rounded-none print:border-0 print:shadow-none ${exact}`}>
-      <header className="flex flex-wrap items-end justify-between gap-6 px-5 pt-6 pb-7 text-white sm:px-8 sm:pt-8" style={{ background: `linear-gradient(135deg, ${ACCENT} 0%, #4F2BC7 100%)` }}>
+      <header className="relative flex flex-wrap items-end justify-between gap-6 px-5 pt-6 pb-7 text-white sm:px-8 sm:pt-8" style={{ background: `radial-gradient(120% 140% at 100% 0%, #0B3A66 0%, ${BRAND.ink} 55%)`, borderBottom: `4px solid ${BRAND.blue}` }}>
         <div className="flex items-center gap-3">
-          <Image src="/avora-logo.png" alt="" width={48} height={48} className="size-12 rounded-xl bg-white p-1" />
+          <Image src="/avora-logo.png" alt="" width={48} height={48} className="size-12 rounded-xl ring-1 ring-white/15" />
           <div>
             <p className="text-xl font-semibold tracking-tight">{company?.company_name ?? "Avora Brands"}</p>
-            {company?.tagline && <p className="text-[12px] text-white/75">{company.tagline}</p>}
+            {company?.tagline && <p className="text-[12px] text-white/65">{company.tagline}</p>}
           </div>
         </div>
         <div className="sm:text-right">
-          <p className={`${label} text-white/70`}>{kind}</p>
+          <p className={`${label}`} style={{ color: BRAND.sky }}>{kind}</p>
           <p className="text-2xl font-semibold tracking-tight sm:text-3xl">{number}</p>
         </div>
       </header>
@@ -151,16 +152,16 @@ function ModernLayout({ kind, number, title, company, party, meta, items, taxMod
       </div>
 
       <div className="px-5 pt-6 sm:px-8">
-        {title && <div className="mb-5 rounded-xl px-4 py-3" style={{ background: "#F4F0FF" }}><p className={`${label}`} style={{ color: ACCENT }}>Subject</p><p className="mt-0.5 text-[15px] font-semibold text-slate-900">{title}</p></div>}
+        {title && <div className="mb-5 rounded-xl px-4 py-3" style={{ background: BRAND.tint }}><p className={`${label}`} style={{ color: BRAND.blue }}>Subject</p><p className="mt-0.5 text-[15px] font-semibold text-slate-900">{title}</p></div>}
         <table className="stack w-full border-separate border-spacing-0">
           <thead><tr className="text-left text-[10px] tracking-[0.12em] text-white uppercase">
-            <th className="rounded-l-lg px-3 py-2.5 font-semibold" style={{ background: ACCENT }}>Item</th>
-            {n.showHsn && <th className="px-3 py-2.5 font-semibold" style={{ background: ACCENT }}>HSN/SAC</th>}
-            <th className="px-3 py-2.5 text-right font-semibold" style={{ background: ACCENT }}>Qty</th>
-            <th className="px-3 py-2.5 text-right font-semibold" style={{ background: ACCENT }}>Rate</th>
-            {n.showDisc && <th className="px-3 py-2.5 text-right font-semibold" style={{ background: ACCENT }}>Disc.</th>}
-            {n.taxed && <th className="px-3 py-2.5 text-right font-semibold" style={{ background: ACCENT }}>GST</th>}
-            <th className="rounded-r-lg px-3 py-2.5 text-right font-semibold" style={{ background: ACCENT }}>Amount</th>
+            <th className="rounded-l-lg px-3 py-2.5 font-semibold" style={{ background: BRAND.ink }}>Item</th>
+            {n.showHsn && <th className="px-3 py-2.5 font-semibold" style={{ background: BRAND.ink }}>HSN/SAC</th>}
+            <th className="px-3 py-2.5 text-right font-semibold" style={{ background: BRAND.ink }}>Qty</th>
+            <th className="px-3 py-2.5 text-right font-semibold" style={{ background: BRAND.ink }}>Rate</th>
+            {n.showDisc && <th className="px-3 py-2.5 text-right font-semibold" style={{ background: BRAND.ink }}>Disc.</th>}
+            {n.taxed && <th className="px-3 py-2.5 text-right font-semibold" style={{ background: BRAND.ink }}>GST</th>}
+            <th className="rounded-r-lg px-3 py-2.5 text-right font-semibold" style={{ background: BRAND.ink }}>Amount</th>
           </tr></thead>
           <tbody>
             {items.map((it, i) => (
@@ -191,7 +192,7 @@ function ModernLayout({ kind, number, title, company, party, meta, items, taxMod
             {Number(totals.discount_total) > 0 && <div className="flex justify-between"><dt className="text-slate-500">Taxable value</dt><dd className="tabular-nums">{formatINR(Number(totals.subtotal) - Number(totals.discount_total))}</dd></div>}
             {n.breakdown.map((b) => <div key={b.label} className="flex justify-between"><dt className="text-slate-500">{b.label}</dt><dd className="tabular-nums">{formatINR(b.amount)}</dd></div>)}
           </dl>
-          <div className="mt-3 flex items-center justify-between rounded-xl px-4 py-3 text-white" style={{ background: ACCENT }}>
+          <div className="mt-3 flex items-center justify-between rounded-xl px-4 py-3 text-white" style={{ background: BRAND.blue }}>
             <span className="text-[11px] font-semibold tracking-[0.12em] uppercase">Total</span>
             <span className="text-xl font-semibold tabular-nums">{formatINR(totals.total)}</span>
           </div>
@@ -203,7 +204,7 @@ function ModernLayout({ kind, number, title, company, party, meta, items, taxMod
 
       {terms && <section className="mx-5 border-t border-slate-200 pt-4 text-[12px] text-slate-500 sm:mx-8"><p className={`${label} text-slate-400`}>Terms & conditions</p><p className="mt-1 whitespace-pre-wrap">{terms}</p></section>}
       {footer}
-      <footer className="mt-8 flex flex-wrap items-center justify-between gap-2 px-5 py-4 text-[11px] text-slate-500 sm:px-8" style={{ background: "#F4F0FF" }}>
+      <footer className="mt-8 flex flex-wrap items-center justify-between gap-2 px-5 py-4 text-[11px] text-white/70 sm:px-8" style={{ background: BRAND.ink }}>
         <span>Thank you for your business.</span>
         <span>{[company?.website, company?.email].filter(Boolean).join(" · ")}</span>
       </footer>
