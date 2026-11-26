@@ -18,15 +18,13 @@ export async function saveQuotation(id: string | null, _: ActionState, fd: FormD
     if (id) {
       const existing = unwrap(await supabase.from("quotations").select("status").eq("id", id).single());
       if (["accepted", "rejected", "expired"].includes(existing.status)) return fail(`A ${existing.status} quotation can't be edited. Duplicate it instead.`);
-      unwrap(await supabase.from("quotations").update(header).eq("id", id).select("id").single());
-      unwrap(await supabase.from("quotation_items").delete().eq("quotation_id", id).select("id"));
-      savedId = id;
-    } else {
-      const q = unwrap(await supabase.from("quotations").insert({ ...header, organization_id: s.orgId, created_by: s.userId }).select("id, number").single());
-      savedId = q.id;
-      await logActivity(supabase, s, { entityType: "quotation", entityId: q.id, action: "created", summary: `Quotation ${q.number} drafted · ${header.title}`, clientId: header.client_id, projectId: header.project_id });
     }
-    unwrap(await supabase.from("quotation_items").insert(items.map((it, position) => ({ ...it, hsn_sac: undefined, position, quotation_id: savedId, organization_id: s.orgId }))).select("id"));
+    // header + line items in one transaction (save_quotation, migration 0009)
+    savedId = unwrap<string>(await supabase.rpc("save_quotation", { p_id: id, p_org: s.orgId, p_header: header, p_items: items }));
+    if (!id) {
+      const { data: q } = await supabase.from("quotations").select("number").eq("id", savedId).single();
+      await logActivity(supabase, s, { entityType: "quotation", entityId: savedId, action: "created", summary: `Quotation ${q?.number ?? ""} drafted · ${header.title}`, clientId: header.client_id, projectId: header.project_id });
+    }
     revalidatePath("/quotations");
   } catch (e) { return toActionError(e); }
   redirect(`/quotations/${savedId}`);

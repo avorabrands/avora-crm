@@ -201,6 +201,24 @@ await as("designer", async () => {
   check("team member cannot see payments", (await count(`select * from payments`)) === 0);
 });
 
+console.log("\nAtomic quotation / invoice saves");
+await as("manager", async () => {
+  const line = (o = {}) => ({ name: "Brochure", description: "", hsn_sac: "998391", quantity: 2, unit_price: 2500, discount_pct: 0, tax_rate: 18, ...o });
+  const before = Number((await one(`select count(*) n from quotations`)).n);
+  const qid = await db.query(`select save_quotation(null, $1, $2, $3) id`, [ids.org, { client_id: ids.cA, title: "Atomic test", issue_date: "2026-11-26", tax_mode: "intra_state" }, JSON.stringify([line(), line({ name: "Second" })])]).then((r) => r.rows[0].id).catch((e) => e.message);
+  const q = await one(`select total, (select count(*) from quotation_items where quotation_id=$1)::int n from quotations where id=$1`, [qid]).catch(() => null);
+  check("save_quotation writes header + items (hsn ignored)", q && Number(q.total) === 11800 && q.n === 2, { qid, q });
+  check("bad line rolls back the whole quotation", (await tryq(`select save_quotation(null, $1, $2, $3)`, [ids.org, { client_id: ids.cA, title: "Should not exist", issue_date: "2026-11-26", tax_mode: "intra_state" }, JSON.stringify([line({ quantity: 0 })])])) !== "ok" && Number((await one(`select count(*) n from quotations`)).n) === before + 1);
+  check("failed edit keeps existing items", (await tryq(`select save_quotation($1, $2, $3, $4)`, [qid, ids.org, { client_id: ids.cA, title: "Edit", issue_date: "2026-11-26", tax_mode: "intra_state" }, JSON.stringify([line({ unit_price: -1 })])])) !== "ok" && (await one(`select count(*)::int n from quotation_items where quotation_id=$1`, [qid])).n === 2);
+  check("edit replaces items", (await tryq(`select save_quotation($1, $2, $3, $4)`, [qid, ids.org, { client_id: ids.cA, title: "Edited", issue_date: "2026-11-26", tax_mode: "none" }, JSON.stringify([line({ quantity: 1 })])])) === "ok" && Number((await one(`select total from quotations where id=$1`, [qid])).total) === 2500);
+  const iid = await db.query(`select save_invoice(null, $1, $2, $3) id`, [ids.org, { client_id: ids.cA, invoice_date: "2026-11-26", due_date: "2026-12-10", tax_mode: "inter_state" }, JSON.stringify([line()])]).then((r) => r.rows[0].id).catch((e) => e.message);
+  const inv = await one(`select total, (select hsn_sac from invoice_items where invoice_id=$1 limit 1) hsn from invoices where id=$1`, [iid]).catch(() => null);
+  check("save_invoice keeps HSN/SAC", inv && Number(inv.total) === 5900 && inv.hsn === "998391", { iid, inv });
+});
+await as("designer", async () => {
+  check("team member can't save quotations", (await tryq(`select save_quotation(null, $1, $2, $3)`, [ids.org, { client_id: ids.cA, title: "x", issue_date: "2026-11-26", tax_mode: "none" }, JSON.stringify([{ name: "a", quantity: 1, unit_price: 1 }])])) !== "ok");
+});
+
 console.log("\nFiles & storage");
 const path = `${ids.org}/${ids.cA}/${ids.pA}/x-brochure.pdf`;
 const hiddenPath = `${ids.org}/${ids.cA}/${ids.pA}/y-internal.pdf`;

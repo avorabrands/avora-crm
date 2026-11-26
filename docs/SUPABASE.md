@@ -14,6 +14,7 @@ In **SQL Editor**, run each file in `supabase/migrations/` **in filename order**
 6. `…0006_project_policy_and_convert_rpc.sql` – projects read policy fix + atomic `convert_lead()`
 7. `…0007_storage_orphan_cleanup.sql` – uploaders can remove their own orphaned objects
 8. `…0008_column_guards.sql` – team members can't approve/complete/share via direct API calls
+9. `…0009_atomic_document_save.sql` – quotations/invoices save header + line items in one transaction
 
 (With the Supabase CLI: `supabase link` then `supabase db push`.)
 
@@ -21,7 +22,7 @@ Verify locally any time with `npm run test:db` (no Supabase needed).
 
 **Test data:** run `supabase/seed.sql` in the SQL editor (no service-role key needed) or `npm run seed`. Dev/staging only.
 
-The current project is **avora-crm** (`xorfhfhxpfignobisuku`, ap-south-1); migrations 0001–0008 and the seed are applied.
+The current project is **avora-crm** (`xorfhfhxpfignobisuku`, ap-south-1); migrations 0001–0009 and the seed are applied.
 
 ## 3. Auth settings
 - **Authentication → Providers → Email**: enable email/password. Disable public sign-ups (**"Allow new users to sign up" → off**) — users are invited by an admin.

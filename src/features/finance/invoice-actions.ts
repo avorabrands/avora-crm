@@ -19,15 +19,13 @@ export async function saveInvoice(id: string | null, _: ActionState, fd: FormDat
       const existing = unwrap(await supabase.from("invoices").select("status, amount_paid").eq("id", id).single());
       if (existing.status === "cancelled") return fail("Cancelled invoices can't be edited.");
       if (Number(existing.amount_paid) > 0) return fail("This invoice has payments recorded, so its amounts are locked. Issue a new invoice for changes.");
-      unwrap(await supabase.from("invoices").update(header).eq("id", id).select("id").single());
-      unwrap(await supabase.from("invoice_items").delete().eq("invoice_id", id).select("id"));
-      savedId = id;
-    } else {
-      const inv = unwrap(await supabase.from("invoices").insert({ ...header, organization_id: s.orgId, created_by: s.userId }).select("id, number").single());
-      savedId = inv.id;
-      await logActivity(supabase, s, { entityType: "invoice", entityId: inv.id, action: "created", summary: `Invoice ${inv.number} drafted`, clientId: header.client_id, projectId: header.project_id });
     }
-    unwrap(await supabase.from("invoice_items").insert(items.map((it, position) => ({ ...it, position, invoice_id: savedId, organization_id: s.orgId }))).select("id"));
+    // header + line items in one transaction (save_invoice, migration 0009)
+    savedId = unwrap<string>(await supabase.rpc("save_invoice", { p_id: id, p_org: s.orgId, p_header: header, p_items: items }));
+    if (!id) {
+      const { data: inv } = await supabase.from("invoices").select("number").eq("id", savedId).single();
+      await logActivity(supabase, s, { entityType: "invoice", entityId: savedId, action: "created", summary: `Invoice ${inv?.number ?? ""} drafted`, clientId: header.client_id, projectId: header.project_id });
+    }
     revalidatePath("/invoices");
   } catch (e) { return toActionError(e); }
   redirect(`/invoices/${savedId}`);
