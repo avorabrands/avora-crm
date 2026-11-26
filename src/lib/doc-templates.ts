@@ -69,3 +69,26 @@ export function documentSubject(title: string | null | undefined, items: { name:
   if (!items.length) return null;
   return items.length > 1 ? `${items[0].name} +${items.length - 1} more` : items[0].name;
 }
+
+/** Bank details are stored as one printable block ("Bank: …\nA/c: …\nIFSC: …"); Settings edits the three parts separately. */
+export function parseBankDetails(text: string | null | undefined) {
+  const out = { bank: "", account: "", ifsc: "" };
+  const extra: string[] = [];
+  for (const raw of (text ?? "").split("\n")) {
+    const line = raw.trim();
+    if (!line) continue;
+    const m = line.match(/^(bank(?: name)?|a\/c(?: no\.?)?|account(?: no\.?| number)?|ifsc(?: code)?)\s*[:\-]\s*(.*)$/i);
+    if (!m) { extra.push(line); continue; }
+    const key = m[1].toLowerCase();
+    if (key.startsWith("bank")) out.bank = m[2];
+    else if (key.startsWith("ifsc")) out.ifsc = m[2];
+    else out.account = m[2];
+  }
+  if (extra.length) out.bank = [out.bank, ...extra].filter(Boolean).join(", ");
+  return out;
+}
+
+export function formatBankDetails(p: { bank?: string | null; account?: string | null; ifsc?: string | null }) {
+  const lines = [p.bank && `Bank: ${p.bank}`, p.account && `A/c: ${p.account}`, p.ifsc && `IFSC: ${p.ifsc}`].filter(Boolean);
+  return lines.length ? lines.join("\n") : null;
+}

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { DOCUMENT_TEMPLATES } from "@/lib/doc-templates";
+import { DOCUMENT_TEMPLATES, formatBankDetails } from "@/lib/doc-templates";
 import { z } from "zod";
 import { authorize, authorizeStaff } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -12,15 +12,19 @@ const companySchema = z.object({
   legal_name: zText(200), tagline: zText(200), address: zText(1000), state: zText(60),
   gstin: z.preprocess((v) => (typeof v === "string" && v.trim() ? v.trim().toUpperCase() : null), z.string().regex(/^[0-9]{2}[A-Z0-9]{13}$/, "Invalid GSTIN").nullable()),
   pan: z.preprocess((v) => (typeof v === "string" && v.trim() ? v.trim().toUpperCase() : null), z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]$/, "Invalid PAN").nullable()),
-  email: zEmail, phone: zText(30), website: zText(200), bank_details: zText(2000),
+  email: zEmail, phone: zText(30), website: zText(200),
+  bank_name: zText(120),
+  bank_account: z.preprocess((v) => (typeof v === "string" && v.trim() ? v.replace(/[\s-]/g, "") : null), z.string().regex(/^[0-9]{6,20}$/, "Use 6–20 digits").nullable()),
+  bank_ifsc: z.preprocess((v) => (typeof v === "string" && v.trim() ? v.trim().toUpperCase() : null), z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, "Invalid IFSC (e.g. HDFC0001234)").nullable()),
 });
 
 export async function saveCompany(_: ActionState, fd: FormData): Promise<ActionState> {
   try {
     const s = await authorizeStaff("settings.manage");
-    const v = companySchema.parse(formToObject(fd));
+    const { bank_name, bank_account, bank_ifsc, ...v } = companySchema.parse(formToObject(fd));
     const supabase = await createClient();
-    unwrap(await supabase.from("company_settings").upsert({ organization_id: s.orgId, ...v }).select("organization_id").single());
+    const bank_details = formatBankDetails({ bank: bank_name, account: bank_account, ifsc: bank_ifsc });
+    unwrap(await supabase.from("company_settings").upsert({ organization_id: s.orgId, ...v, bank_details }).select("organization_id").single());
     await supabase.from("organizations").update({ name: v.company_name }).eq("id", s.orgId);
     revalidatePath("/", "layout");
     return ok("Company details saved");

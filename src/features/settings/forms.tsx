@@ -1,9 +1,9 @@
 "use client";
 
 import { TemplateField } from "@/features/finance/components/template-picker";
-import { asTemplate } from "@/lib/doc-templates";
+import { asTemplate, parseBankDetails } from "@/lib/doc-templates";
 import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Building2, Hash, Landmark, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,7 @@ import type { CompanySettings } from "@/features/common/lookups";
 import { changePassword, saveBilling, saveCompany, saveProfile } from "./actions";
 
 export function CompanyForm({ s }: { s: CompanySettings | null }) {
+  const bank = parseBankDetails(s?.bank_details);
   return (
     <ActionForm action={saveCompany} className="grid gap-4 sm:grid-cols-2">
       <Field name="company_name" label="Company name" required><Input name="company_name" defaultValue={s?.company_name ?? "Avora Brands"} /></Field>
@@ -25,7 +26,23 @@ export function CompanyForm({ s }: { s: CompanySettings | null }) {
       <Field name="email" label="Billing email"><Input name="email" type="email" defaultValue={s?.email ?? ""} /></Field>
       <Field name="phone" label="Phone"><Input name="phone" defaultValue={s?.phone ?? ""} /></Field>
       <Field name="website" label="Website"><Input name="website" defaultValue={s?.website ?? ""} /></Field>
-      <Field name="bank_details" label="Bank details (printed on invoices)" className="sm:col-span-2"><Textarea name="bank_details" rows={3} defaultValue={s?.bank_details ?? ""} placeholder={"Bank: …\nA/c: …\nIFSC: …"} /></Field>
+      <fieldset className="grid gap-3 sm:col-span-2">
+        <legend className="mb-1.5 text-xs font-medium">Bank details <span className="font-normal text-muted-foreground">— printed on invoices</span></legend>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {([
+            { name: "bank_name", label: "Bank name", icon: Landmark, value: bank.bank, placeholder: "HDFC Bank, Vijayawada" },
+            { name: "bank_account", label: "Account number", icon: Hash, value: bank.account, placeholder: "50200012345678", inputMode: "numeric" as const },
+            { name: "bank_ifsc", label: "IFSC code", icon: Building2, value: bank.ifsc, placeholder: "HDFC0001234", upper: true },
+          ]).map((f) => (
+            <div key={f.name} className="relative rounded-xl border bg-muted/30 p-3">
+              <f.icon aria-hidden className="absolute top-3 right-3 size-4 text-muted-foreground" />
+              <Field name={f.name} label={f.label}>
+                <Input name={f.name} defaultValue={f.value} placeholder={f.placeholder} inputMode={f.inputMode} autoComplete="off" className={f.upper ? "bg-background uppercase" : "bg-background"} />
+              </Field>
+            </div>
+          ))}
+        </div>
+      </fieldset>
       <div className="flex justify-end sm:col-span-2"><SubmitButton>Save company</SubmitButton></div>
     </ActionForm>
   );
