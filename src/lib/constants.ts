@@ -11,7 +11,7 @@ function def<T extends string>(entries: [T, string, Tone][]) {
 }
 
 export const ROLES = def([
-  ["admin", "Admin / Owner", "purple"],
+  ["admin", "Admin", "purple"],
   ["manager", "Manager", "blue"],
   ["team_member", "Team member", "teal"],
   ["client", "Client", "slate"],
@@ -181,3 +181,6 @@ export const LEAD_SOURCES = ["Referral", "Website", "Instagram", "LinkedIn", "Go
 export const SERVICES = ["Brand Identity", "Graphic Design", "UI/UX Design", "Website", "Social Media", "Digital Marketing", "Print", "Packaging", "Video"];
 export const CLIENT_CATEGORIES = ["Education", "Healthcare", "Real Estate", "Retail", "Hospitality", "Technology", "Manufacturing", "Non-profit", "Other"];
 export const INDIAN_STATES = ["Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Delhi", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu and Kashmir", "Jharkhand", "Karnataka", "Kerala", "Ladakh", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Puducherry", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"];
+
+/** "Main admin" for the workspace owner, "Co-admin" for other admins, else the role name. */
+export const roleLabel = (role: Role, isOwner?: boolean) => (role === "admin" ? (isOwner ? "Main admin" : "Co-admin") : ROLES.label[role]);

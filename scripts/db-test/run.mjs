@@ -49,6 +49,7 @@ const mem = (u, role, client = null, org = ids.org) =>
 await mem("admin", "admin"); await mem("manager", "manager"); await mem("designer", "team_member"); await mem("designer2", "team_member");
 await mem("clientA", "client", ids.cA); await mem("clientB", "client", ids.cB);
 await mem("outsider", "admin", null, ids.org2);
+await db.query(`update organization_members set is_owner = true where user_id in ($1,$2)`, [ids.admin, ids.outsider]);
 
 ids.pA = (await one(`insert into projects (organization_id, name, client_id, manager_id) values ($1,'Course Creative Design',$2,$3) returning id`, [ids.org, ids.cA, ids.manager])).id;
 ids.pHidden = (await one(`insert into projects (organization_id, name, client_id, client_visible) values ($1,'Internal pitch',$2,false) returning id`, [ids.org, ids.cA])).id;
@@ -369,6 +370,29 @@ await (async () => {
     check("client reads company settings (PDF header)", (await count(`select organization_id from company_settings`)) === 1);
   } finally { await db.exec(`reset role;`); }
 })();
+
+
+console.log("\nMain admin and co-admins");
+check("first admin became the main admin", (await one(`select is_owner from organization_members where user_id=$1`, [ids.admin])).is_owner === true);
+check("only one main admin per workspace", (await tryq(`update organization_members set is_owner=true where user_id=$1`, [ids.manager])) !== "ok");
+await user("coadmin", "co@x.in");
+await db.query(`insert into organization_members (organization_id, user_id, role) values ($1,$2,'admin')`, [ids.org, ids.coadmin]);
+await as("coadmin", async () => {
+  { const n = await count(`select project_id from project_financials`); check("co-admin has full admin read access", n >= 1, n); }
+  check("co-admin can edit a manager's department", (await tryq(`update organization_members set department='Sales' where user_id=$1 returning id`, [ids.manager])) === "ok");
+  { const r = await tryq(`update organization_members set role='manager' where user_id=$1`, [ids.admin]); check("co-admin can't demote the main admin", String(r).includes("main admin"), r); }
+  check("co-admin can't disable the main admin", (await tryq(`update organization_members set status='inactive' where user_id=$1`, [ids.admin])).includes("main admin"));
+  check("co-admin can't promote a manager to admin", (await tryq(`update organization_members set role='admin' where user_id=$1`, [ids.manager])).includes("Only the main admin"));
+  check("co-admin can't make themselves main admin", (await tryq(`update organization_members set is_owner=true where user_id=$1`, [ids.coadmin])) !== "ok");
+  check("co-admin sees is_owner() false", (await one(`select is_owner($1) v`, [ids.org])).v === false);
+});
+await as("admin", async () => {
+  check("main admin sees is_owner() true", (await one(`select is_owner($1) v`, [ids.org])).v === true);
+  check("main admin can promote a manager to admin", (await tryq(`update organization_members set role='admin' where user_id=$1 returning id`, [ids.manager])) === "ok");
+  check("main admin can demote them again", (await tryq(`update organization_members set role='manager' where user_id=$1 returning id`, [ids.manager])) === "ok");
+  check("main admin can disable a co-admin", (await tryq(`update organization_members set status='inactive' where user_id=$1 returning id`, [ids.coadmin])) === "ok");
+  check("main admin can't give away is_owner via the API", (await tryq(`update organization_members set is_owner=false where user_id=$1`, [ids.admin])) !== "ok");
+});
 
 console.log("\nReminders");
 await db.query(`update tasks set due_date = current_date - 1, status='todo' where id=$1`, [ids.task]);

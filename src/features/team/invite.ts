@@ -72,10 +72,11 @@ export async function inviteUser(input: {
 }
 
 /** Admin sets a new password for any sign-in in their organisation. */
-export async function setPasswordForMember(orgId: string, memberId: string, password: string) {
+export async function setPasswordForMember(orgId: string, memberId: string, password: string, callerIsOwner: boolean) {
   const db = admin();
-  const { data: m } = await db.from("organization_members").select("user_id, profile:profiles(email)").eq("id", memberId).eq("organization_id", orgId).maybeSingle();
+  const { data: m } = await db.from("organization_members").select("user_id, is_owner, profile:profiles(email)").eq("id", memberId).eq("organization_id", orgId).maybeSingle();
   if (!m) throw { code: "P0002", message: "That sign-in wasn't found." };
+  if (m.is_owner && !callerIsOwner) throw { code: "42501", message: "Only the main admin can change the main admin's password." };
   const { error } = await db.auth.admin.updateUserById(m.user_id as string, { password });
   if (error) throw { code: "AUTH", message: error.message };
   return (m.profile as unknown as { email: string } | null)?.email ?? "this person";

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireStaff } from "@/lib/auth/session";
 import { can } from "@/lib/auth/permissions";
-import { ROLES } from "@/lib/constants";
+import { roleLabel } from "@/lib/constants";
 import { NAV } from "@/components/shell/nav-config";
 import { Sidebar } from "@/components/shell/sidebar";
 import { BottomNav } from "@/components/shell/bottom-nav";
@@ -33,7 +33,7 @@ export default async function InternalLayout({ children }: LayoutProps<"/">) {
           <NewMenu actions={actions} />
           <div className="hidden lg:block"><ThemeToggle /></div>
           <NotificationSlot userId={session.userId} />
-          <UserMenu name={session.fullName} email={session.email} roleLabel={ROLES.label[session.role]} profileHref="/settings?tab=profile" />
+          <UserMenu name={session.fullName} email={session.email} roleLabel={roleLabel(session.role, session.isOwner)} profileHref="/settings?tab=profile" />
         </header>
         <main className="mx-auto w-full max-w-[1400px] flex-1 p-4 pb-[calc(6rem+env(safe-area-inset-bottom))] md:p-6 md:pb-28 lg:p-8">{children}</main>
       </div>

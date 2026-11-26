@@ -3,7 +3,7 @@ import { Users } from "lucide-react";
 import { requireStaff } from "@/lib/auth/session";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
-import { ROLES, OPEN_TASK_STATUSES } from "@/lib/constants";
+import { ROLES, OPEN_TASK_STATUSES, roleLabel } from "@/lib/constants";
 import { daysAgoTimestamp, formatDate, todayISO } from "@/lib/format";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PageHeader } from "@/components/app/page-header";
@@ -22,7 +22,7 @@ export default async function TeamPage() {
   const supabase = await createClient();
   const since = daysAgoTimestamp(30);
   const [{ data: members }, { data: tasks }, { data: pm }, { data: acts }] = await Promise.all([
-    supabase.from("organization_members").select("id, user_id, role, department, designation, employee_code, joining_date, status, profile:profiles(full_name, email, phone)").in("role", ["admin", "manager", "team_member"]).order("created_at"),
+    supabase.from("organization_members").select("id, user_id, role, is_owner, department, designation, employee_code, joining_date, status, profile:profiles(full_name, email, phone)").in("role", ["admin", "manager", "team_member"]).order("created_at"),
     supabase.from("tasks").select("assigned_to, status, due_date, completed_at"),
     supabase.from("project_members").select("user_id"),
     supabase.from("activity_logs").select("actor_id").gte("created_at", since),
@@ -42,7 +42,7 @@ export default async function TeamPage() {
   const admin = can(s.role, "team.manage");
   return (
     <>
-      <PageHeader title="Team" description="Employees, roles and workload. Open tasks and overdue counts update live." breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Team" }]} actions={admin && <AddMemberButton />} />
+      <PageHeader title="Team" description="Employees, roles and workload. Open tasks and overdue counts update live." breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Team" }]} actions={admin && <AddMemberButton viewerIsOwner={s.isOwner} />} />
       {admin && !isAdminClientConfigured() && <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">Creating sign-ins and setting passwords needs <code>SUPABASE_SERVICE_ROLE_KEY</code> on the server. Add it in Vercel → Settings → Environment Variables (see docs/SUPABASE.md).</p>}
       <Panel bodyClassName="p-0">
         {rows.length === 0 ? <EmptyState icon={Users} title="No team members" /> : (
@@ -58,7 +58,7 @@ export default async function TeamPage() {
                 return (
                   <TableRow key={m.id}>
                     <TableCell className="pl-4"><PersonCell name={m.profile?.full_name} sub={[m.employee_code, m.profile?.email].filter(Boolean).join(" · ")} /></TableCell>
-                    <TableCell label="Role"><StatusBadge def={ROLES} value={m.role} /></TableCell>
+                    <TableCell label="Role">{m.role === "admin" ? <Pill tone="purple">{roleLabel("admin", m.is_owner)}</Pill> : <StatusBadge def={ROLES} value={m.role} />}</TableCell>
                     <TableCell label="Department" className="text-sm">{m.department ?? "—"}<p className="text-xs text-muted-foreground">{m.designation}</p></TableCell>
                     <TableCell label="Joined" className="text-sm">{formatDate(m.joining_date)}</TableCell>
                     <TableCell label="Projects" className="text-center tabular-nums">{st.projects}</TableCell>
@@ -67,7 +67,7 @@ export default async function TeamPage() {
                     <TableCell label="Done (30 days)" className="text-center tabular-nums">{st.done30}</TableCell>
                     <TableCell label="Activity (30 days)" className="text-center tabular-nums">{st.activity}</TableCell>
                     <TableCell label="Status"><Pill tone={m.status === "active" ? "green" : "slate"}>{m.status}</Pill></TableCell>
-                    {admin && <TableCell actions className="pr-4"><EditMember m={m} action={updateTeamMember.bind(null, m.id)} /></TableCell>}
+                    {admin && <TableCell actions className="pr-4"><EditMember m={m} viewerIsOwner={s.isOwner} action={updateTeamMember.bind(null, m.id)} /></TableCell>}
                   </TableRow>
                 );
               })}

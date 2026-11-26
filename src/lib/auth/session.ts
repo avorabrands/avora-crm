@@ -16,6 +16,8 @@ export type Session = {
   clientId: string | null;
   leadId: string | null;
   memberId: string;
+  /** The main admin (one per workspace). Other admins are co-admins. */
+  isOwner: boolean;
 };
 
 /** Reads + verifies the Supabase session once per request (React cache). */
@@ -29,7 +31,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
     supabase.from("profiles").select("full_name, email, avatar_url").eq("id", userId).maybeSingle(),
     supabase
       .from("organization_members")
-      .select("id, role, client_id, lead_id, organization_id, status, organizations(name)")
+      .select("id, role, client_id, lead_id, is_owner, organization_id, status, organizations(name)")
       .eq("user_id", userId)
       .eq("status", "active")
       .order("created_at")
@@ -50,6 +52,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
     clientId: member.client_id,
     leadId: member.lead_id ?? null,
     memberId: member.id,
+    isOwner: member.is_owner === true,
   };
 });
 

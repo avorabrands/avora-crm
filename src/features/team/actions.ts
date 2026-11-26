@@ -24,6 +24,7 @@ export async function addTeamMember(_: ActionState, fd: FormData): Promise<Actio
   try {
     const s = await authorizeStaff("team.manage");
     const v = memberSchema.parse(formToObject(fd));
+    if (v.role === "admin" && !s.isOwner) return fail("Only the main admin can add co-admins.", { role: "Only the main admin can add admins" });
     const login = parseLogin(fd);
     const r = await inviteUser({ ...login, orgId: s.orgId, email: v.email, fullName: v.full_name, role: v.role, department: v.department, designation: v.designation, employeeCode: v.employee_code, joiningDate: v.joining_date, phone: v.phone });
     revalidatePath("/team");
@@ -39,6 +40,10 @@ export async function updateTeamMember(memberId: string, _: ActionState, fd: For
     const v = updateSchema.parse(formToObject(fd));
     if (memberId === s.memberId && (v.role !== "admin" || v.status !== "active")) return fail("You can't remove your own admin access.");
     const supabase = await createClient();
+    const target = unwrap(await supabase.from("organization_members").select("role, status, is_owner").eq("id", memberId).single());
+    if (target.is_owner && !s.isOwner) return fail("Only the main admin can change the main admin.");
+    if (!s.isOwner && (target.role === "admin" || v.role === "admin") && (target.role !== v.role || target.status !== v.status))
+      return fail("Only the main admin can add, remove, enable or disable admins.");
     unwrap(await supabase.from("organization_members").update(v).eq("id", memberId).in("role", staffRoles).select("id").single());
     revalidatePath("/team");
     return ok("Team member updated");
@@ -51,7 +56,7 @@ export async function setMemberPassword(memberId: string, _: ActionState, fd: Fo
     const s = await authorizeStaff("team.manage");
     const password = passwordSchema.safeParse(fd.get("password"));
     if (!password.success) return fail(password.error.issues[0].message, { password: password.error.issues[0].message });
-    const email = await setPasswordForMember(s.orgId, memberId, password.data);
+    const email = await setPasswordForMember(s.orgId, memberId, password.data, s.isOwner);
     return ok(`New password set for ${email}. Share it with them securely.`);
   } catch (e) { return toActionError(e); }
 }
