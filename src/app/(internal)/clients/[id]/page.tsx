@@ -19,7 +19,7 @@ import { ConfirmAction } from "@/components/app/confirm";
 import { TabNav, currentTab } from "@/components/app/tab-nav";
 import { clientOptions, projectOptions, staffOptions } from "@/features/common/lookups";
 import { clientFinancials, getClient } from "@/features/clients/queries";
-import { deleteClientRecord, inviteClientPortalUser, updateClientRecord } from "@/features/clients/actions";
+import { deleteClientRecord, inviteClientPortalUser, setPortalAccess, updateClientRecord } from "@/features/clients/actions";
 import { ClientFields } from "@/features/clients/components/client-form";
 import { PortalAccess, type PortalUser } from "@/features/clients/components/portal-access";
 import { listProjects } from "@/features/projects/queries";
@@ -124,7 +124,7 @@ async function Overview({ session, client, finance }: { session: Awaited<ReturnT
         </Panel>
         <div className="space-y-6">
           <Panel title="Client portal access" description="People who can sign in to see this client's shared work.">
-            <PortalAccess clientId={client.id} users={(portalUsers.data ?? []) as unknown as PortalUser[]} invite={inviteClientPortalUser.bind(null, client.id)} canManage={session.role === "admin"} defaultName={client.contact_person} defaultEmail={client.email} />
+            <PortalAccess users={(portalUsers.data ?? []) as unknown as PortalUser[]} invite={inviteClientPortalUser.bind(null, client.id)} toggle={setPortalAccess.bind(null, client.id)} canManage={session.role === "admin"} defaultName={client.contact_person} defaultEmail={client.email} />
           </Panel>
           <Panel title="Contacts">
             {(contacts.data ?? []).length === 0 ? <p className="text-sm text-muted-foreground">No additional contacts.</p> : (

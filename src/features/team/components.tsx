@@ -7,8 +7,9 @@ import { Field, FormDialog, NativeSelect, type FormAction } from "@/components/a
 import { RowActions } from "@/components/app/row-actions";
 import { ROLES } from "@/lib/constants";
 import { addTeamMember } from "./actions";
+import { LoginFields, SetPasswordButton } from "./login-fields";
 
-const STAFF_ROLES = ROLES.options.filter((r) => r.value !== "client");
+const STAFF_ROLES = ROLES.options.filter((r) => r.value !== "client" && r.value !== "lead");
 
 export type MemberRow = { id: string; user_id: string; role: string; department: string | null; designation: string | null; employee_code: string | null; joining_date: string | null; status: string; profile: { full_name: string; email: string; phone: string | null } | null };
 
@@ -27,15 +28,21 @@ function Fields({ m }: { m?: MemberRow }) {
       <Field name="department" label="Department"><Input name="department" defaultValue={m?.department ?? ""} placeholder="Design" /></Field>
       <Field name="designation" label="Designation"><Input name="designation" defaultValue={m?.designation ?? ""} placeholder="Senior Designer" /></Field>
       <Field name="joining_date" label="Joining date"><Input type="date" name="joining_date" defaultValue={m?.joining_date ?? ""} /></Field>
+      {!m && <div className="grid gap-1.5 border-t pt-4 sm:col-span-2"><p className="text-xs font-medium">How will they sign in?</p><LoginFields /></div>}
       {m && <Field name="status" label="Account status"><NativeSelect name="status" defaultValue={m.status === "inactive" ? "inactive" : "active"}><option value="active">Active</option><option value="inactive">Inactive (no access)</option></NativeSelect></Field>}
     </div>
   );
 }
 
 export function AddMemberButton() {
-  return <FormDialog trigger={<Button><Plus /> Add employee</Button>} title="Add employee" description="Sends a Supabase invitation email so they can set a password." action={addTeamMember} submitLabel="Send invite" size="lg"><Fields /></FormDialog>;
+  return <FormDialog trigger={<Button><Plus /> Add employee</Button>} title="Add employee" description="Creates their sign-in for the CRM. Their role decides what they can see." action={addTeamMember} submitLabel="Create sign-in" size="lg"><Fields /></FormDialog>;
 }
 
 export function EditMember({ m, action }: { m: MemberRow; action: FormAction }) {
-  return <RowActions editAs="dialog" editTitle={`Edit ${m.profile?.full_name ?? "member"}`} edit={action} editForm={<Fields m={m} />} />;
+  return (
+    <div className="flex items-center justify-end gap-1">
+      <SetPasswordButton memberId={m.id} name={m.profile?.full_name} email={m.profile?.email} />
+      <RowActions editAs="dialog" editTitle={`Edit ${m.profile?.full_name ?? "member"}`} edit={action} editForm={<Fields m={m} />} />
+    </div>
+  );
 }

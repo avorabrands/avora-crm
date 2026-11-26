@@ -29,19 +29,20 @@ export async function reviewDeliverable(deliverableId: string, _: ActionState, f
 
 export async function respondToQuotation(quotationId: string, _: ActionState, fd: FormData): Promise<ActionState> {
   try {
-    await requirePortal();
+    const s = await authorize();
+    if (s.role !== "client" && s.role !== "lead") throw { code: "42501", message: "Only portal users can respond to quotations." };
     const accept = fd.get("decision") === "accept";
     const supabase = await createClient();
     const { error } = await supabase.rpc("client_respond_quotation", { p_quotation: quotationId, p_accept: accept, p_note: String(fd.get("note") ?? "") || null });
     if (error) throw error;
-    revalidatePath(`/portal/quotations/${quotationId}`); revalidatePath("/portal/quotations");
+    revalidatePath(`/portal/quotations/${quotationId}`); revalidatePath("/portal/quotations"); revalidatePath("/lead", "layout");
     return ok(accept ? "Quotation accepted. We'll be in touch with next steps." : "Response sent.");
   } catch (e) { return toActionError(e); }
 }
 
 export async function markQuotationViewed(quotationId: string) {
   const s = await authorize();
-  if (s.role !== "client") return;
+  if (s.role !== "client" && s.role !== "lead") return;
   const supabase = await createClient();
   await supabase.rpc("client_mark_quotation_viewed", { p_quotation: quotationId });
 }

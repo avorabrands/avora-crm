@@ -14,6 +14,7 @@ export type Session = {
   orgName: string;
   role: Role;
   clientId: string | null;
+  leadId: string | null;
   memberId: string;
 };
 
@@ -28,7 +29,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
     supabase.from("profiles").select("full_name, email, avatar_url").eq("id", userId).maybeSingle(),
     supabase
       .from("organization_members")
-      .select("id, role, client_id, organization_id, status, organizations(name)")
+      .select("id, role, client_id, lead_id, organization_id, status, organizations(name)")
       .eq("user_id", userId)
       .eq("status", "active")
       .order("created_at")
@@ -47,6 +48,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
     orgName: org?.name ?? "Avora Brands",
     role: member.role as Role,
     clientId: member.client_id,
+    leadId: member.lead_id ?? null,
     memberId: member.id,
   };
 });
@@ -67,18 +69,28 @@ export async function requireSession(): Promise<Session> {
   return session;
 }
 
+/** Where each role lands after signing in. */
+export const homeFor = (role: Role) => (role === "client" ? "/portal" : role === "lead" ? "/lead" : "/dashboard");
+
 /** Internal CRM pages. Portal users are sent to their portal. */
 export async function requireStaff(capability?: Capability): Promise<Session> {
   const session = await requireSession();
-  if (!isStaffRole(session.role)) redirect("/portal");
+  if (!isStaffRole(session.role)) redirect(homeFor(session.role));
   if (capability && !can(session.role, capability)) redirect("/dashboard?denied=1");
   return session;
 }
 
 export async function requireClient(): Promise<Session & { clientId: string }> {
   const session = await requireSession();
-  if (session.role !== "client" || !session.clientId) redirect("/dashboard");
+  if (session.role !== "client" || !session.clientId) redirect(homeFor(session.role));
   return session as Session & { clientId: string };
+}
+
+/** Lead portal (quotations only). */
+export async function requireLead(): Promise<Session & { leadId: string }> {
+  const session = await requireSession();
+  if (session.role !== "lead" || !session.leadId) redirect(homeFor(session.role));
+  return session as Session & { leadId: string };
 }
 
 export class AuthError extends Error {}

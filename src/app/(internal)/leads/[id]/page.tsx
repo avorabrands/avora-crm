@@ -14,7 +14,10 @@ import { PersonCell } from "@/components/app/user-avatar";
 import { EmptyState } from "@/components/app/empty-state";
 import { staffOptions } from "@/features/common/lookups";
 import { getLead } from "@/features/leads/queries";
-import { addLeadActivity, convertLead, updateLead } from "@/features/leads/actions";
+import { addLeadActivity, convertLead, createLeadLogin, setLeadLoginAccess, updateLead } from "@/features/leads/actions";
+import { PortalAccess, type PortalUser } from "@/features/clients/components/portal-access";
+import { createClient } from "@/lib/supabase/server";
+import { isAdminClientConfigured } from "@/lib/supabase/admin";
 import { ActivityComposer, LeadHeaderActions } from "@/features/leads/components/lead-detail-actions";
 
 export const metadata: Metadata = { title: "Lead" };
@@ -26,6 +29,10 @@ export default async function LeadDetailPage({ params }: PageProps<"/leads/[id]"
   const { id } = await params;
   const [{ lead, activities }, staff] = await Promise.all([getLead(id), staffOptions(session.orgId)]);
   if (!lead) notFound();
+  const admin = can(session.role, "team.manage");
+  const logins = admin && !lead.converted_client_id
+    ? (((await (await createClient()).from("organization_members").select("id, status, profile:profiles(full_name, email)").eq("lead_id", lead.id).eq("role", "lead")).data ?? []) as unknown as PortalUser[])
+    : [];
 
   return (
     <>
@@ -58,6 +65,12 @@ export default async function LeadDetailPage({ params }: PageProps<"/leads/[id]"
             )}
             {lead.notes && <p className="mt-4 rounded-lg bg-muted/60 p-3 text-sm whitespace-pre-wrap">{lead.notes}</p>}
           </Panel>
+          {admin && !lead.converted_client_id && (
+            <Panel title="Lead sign-in" description="Let this lead sign in to view, download and accept the quotations you send them.">
+              {!isAdminClientConfigured() && <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">Creating sign-ins needs <code>SUPABASE_SERVICE_ROLE_KEY</code> on the server (see docs/SUPABASE.md).</p>}
+              <PortalAccess kind="lead" users={logins} invite={createLeadLogin.bind(null, lead.id)} toggle={setLeadLoginAccess.bind(null, lead.id)} canManage defaultName={lead.contact_person} defaultEmail={lead.email} />
+            </Panel>
+          )}
         </div>
         <Panel title="Follow-ups & activity" description="Log calls, meetings and notes. Scheduling a follow-up updates the lead and sends a reminder to its owner when due.">
           <ActivityComposer action={addLeadActivity.bind(null, lead.id)} />

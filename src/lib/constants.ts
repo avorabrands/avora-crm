@@ -15,6 +15,7 @@ export const ROLES = def([
   ["manager", "Manager", "blue"],
   ["team_member", "Team member", "teal"],
   ["client", "Client", "slate"],
+  ["lead", "Lead", "amber"],
 ] as const satisfies [string, string, Tone][]);
 export type Role = (typeof ROLES.values)[number];
 

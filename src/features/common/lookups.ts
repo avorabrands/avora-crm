@@ -12,7 +12,7 @@ export async function staffOptions(orgId: string): Promise<Option[]> {
     .select("user_id, role, designation, profiles(full_name, email)")
     .eq("organization_id", orgId)
     .eq("status", "active")
-    .neq("role", "client");
+    .in("role", ["admin", "manager", "team_member"]);
   return (data ?? [])
     .map((m) => {
       const p = m.profiles as unknown as { full_name: string; email: string } | null;

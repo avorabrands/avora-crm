@@ -17,6 +17,8 @@ In **SQL Editor**, run each file in `supabase/migrations/` **in filename order**
 9. `…0009_atomic_document_save.sql` – quotations/invoices save header + line items in one transaction
 10. `…0010_document_templates.sql` – per-document PDF template (classic / modern / professional) + defaults in company settings
 11. `…0011_standard_template.sql` – adds the fourth template, "standard" (bordered tax invoice with per-line GST columns)
+12. `…0012_lead_role.sql` – new membership role `lead`
+13. `…0013_lead_logins.sql` – lead sign-ins see only their sent quotations (view / accept / decline); converting the lead turns the login into a client login
 
 (With the Supabase CLI: `supabase link` then `supabase db push`.)
 
@@ -24,7 +26,7 @@ Verify locally any time with `npm run test:db` (no Supabase needed).
 
 **Test data:** run `supabase/seed.sql` in the SQL editor (no service-role key needed) or `npm run seed`. Dev/staging only.
 
-The current project is **avora-crm** (`xorfhfhxpfignobisuku`, ap-south-1); migrations 0001–0011 are applied (demo data removed).
+The current project is **avora-crm** (`xorfhfhxpfignobisuku`, ap-south-1); migrations 0001–0013 are applied (demo data removed).
 
 ## 3. Auth settings
 - **Authentication → Providers → Email**: enable email/password. Disable public sign-ups (**"Allow new users to sign up" → off**) — users are invited by an admin.

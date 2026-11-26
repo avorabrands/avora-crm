@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { fail, formToObject, ok, toActionError, unwrap, type ActionState } from "@/lib/actions";
 import { logActivity } from "@/lib/activity";
 import { inviteUser } from "@/features/team/invite";
+import { parseLogin } from "@/features/team/login-schema";
 import { clientSchema, portalUserSchema } from "./schema";
 
 export async function createClientRecord(_: ActionState, fd: FormData): Promise<ActionState> {
@@ -52,7 +53,7 @@ export async function inviteClientPortalUser(clientId: string, _: ActionState, f
   try {
     const s = await authorizeStaff("team.manage");
     const v = portalUserSchema.parse(formToObject(fd));
-    const result = await inviteUser({ orgId: s.orgId, email: v.email, fullName: v.full_name, role: "client", clientId });
+    const result = await inviteUser({ ...parseLogin(fd), orgId: s.orgId, email: v.email, fullName: v.full_name, role: "client", clientId });
     const supabase = await createClient();
     await logActivity(supabase, s, { entityType: "client", entityId: clientId, action: "portal_invite", summary: `Portal access granted to ${v.email}`, clientId });
     revalidatePath(`/clients/${clientId}`);
@@ -60,7 +61,7 @@ export async function inviteClientPortalUser(clientId: string, _: ActionState, f
   } catch (e) { return toActionError(e); }
 }
 
-export async function setPortalAccess(memberId: string, clientId: string, active: boolean): Promise<ActionState> {
+export async function setPortalAccess(clientId: string, memberId: string, active: boolean): Promise<ActionState> {
   try {
     await authorizeStaff("team.manage");
     const supabase = await createClient();

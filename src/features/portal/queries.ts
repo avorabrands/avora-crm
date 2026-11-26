@@ -20,3 +20,10 @@ export async function portalDeliverables(filter: { projectId?: string; pendingOn
   const { data } = await q;
   return (data ?? []) as unknown as PortalDeliverable[];
 }
+
+/** The lead a lead-portal user represents (quotations-only portal). */
+export async function leadPortalMe() {
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("lead_portal_me").maybeSingle();
+  return data as { organization_id: string; lead_id: string; company_name: string; contact_person: string | null; email: string | null; phone: string | null; location: string | null; code: string } | null;
+}

@@ -2,52 +2,81 @@ import "server-only";
 import { createAdminClient, isAdminClientConfigured } from "@/lib/supabase/admin";
 import type { Role } from "@/lib/constants";
 
+const NOT_CONFIGURED = "SUPABASE_SERVICE_ROLE_KEY is not set on the server, so sign-ins can't be created or changed yet. Add it in Vercel → Settings → Environment Variables (see docs/SUPABASE.md).";
+
+function admin() {
+  if (!isAdminClientConfigured()) throw { code: "CONFIG", message: NOT_CONFIGURED };
+  return createAdminClient();
+}
+
+export type LoginMethod = "password" | "invite";
+
 /**
- * Creates (or reuses) an auth user and links them to the organisation.
- * Caller MUST have verified the current user is an admin. Sends Supabase's
- * built-in invite email (configure SMTP in Supabase for production).
+ * Creates (or reuses) a sign-in and links it to the organisation.
+ * - method "password": the admin chose the password; the account is ready immediately (no email sent).
+ * - method "invite":   Supabase emails a link so the person sets their own password.
+ * Caller MUST have verified the current user is an admin.
  */
 export async function inviteUser(input: {
-  orgId: string; email: string; fullName: string; role: Role; clientId?: string | null;
+  orgId: string; email: string; fullName: string; role: Role; clientId?: string | null; leadId?: string | null;
+  method?: LoginMethod; password?: string | null;
   department?: string | null; designation?: string | null; employeeCode?: string | null; joiningDate?: string | null; phone?: string | null;
 }) {
-  if (!isAdminClientConfigured()) {
-    throw { code: "CONFIG", message: "SUPABASE_SERVICE_ROLE_KEY is not set on the server, so users can't be invited yet. See docs/SUPABASE.md." };
-  }
-  const admin = createAdminClient();
+  const db = admin();
   const email = input.email.toLowerCase();
+  const method = input.method ?? "invite";
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
   // reuse an existing profile if this email already has an account
-  const { data: existing } = await admin.from("profiles").select("id").eq("email", email).maybeSingle();
+  const { data: existing } = await db.from("profiles").select("id").eq("email", email).maybeSingle();
   let userId = existing?.id as string | undefined;
   let message: string;
 
   if (!userId) {
-    const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
-      data: { full_name: input.fullName },
-      redirectTo: `${site}/auth/callback?next=/reset-password`,
-    });
-    if (error) throw { code: "AUTH", message: error.message };
-    userId = data.user.id;
-    message = `Invitation email sent to ${email} via Supabase Auth.`;
+    if (method === "password") {
+      if (!input.password) throw { code: "22023", message: "Enter a password." };
+      const { data, error } = await db.auth.admin.createUser({ email, password: input.password, email_confirm: true, user_metadata: { full_name: input.fullName } });
+      if (error) throw { code: "AUTH", message: error.message };
+      userId = data.user.id;
+      message = `Sign-in created for ${email}. Share the password with them securely.`;
+    } else {
+      const { data, error } = await db.auth.admin.inviteUserByEmail(email, {
+        data: { full_name: input.fullName },
+        redirectTo: `${site}/auth/callback?next=/reset-password`,
+      });
+      if (error) throw { code: "AUTH", message: error.message };
+      userId = data.user.id;
+      message = `Invitation email sent to ${email}.`;
+    }
   } else {
-    message = `${email} already has an account — access added.`;
+    // never silently change an existing person's password here — use "Set password" for that
+    message = `${email} already has a sign-in — access added. Their existing password still works.`;
   }
 
-  await admin.from("profiles").upsert({ id: userId, email, full_name: input.fullName, phone: input.phone ?? null }, { onConflict: "id" });
+  await db.from("profiles").upsert({ id: userId, email, full_name: input.fullName, phone: input.phone ?? null }, { onConflict: "id" });
 
-  const { data: member } = await admin.from("organization_members").select("id, role").eq("organization_id", input.orgId).eq("user_id", userId).maybeSingle();
+  const link = { client_id: input.role === "client" ? input.clientId ?? null : null, lead_id: input.role === "lead" ? input.leadId ?? null : null };
+  const { data: member } = await db.from("organization_members").select("id, role").eq("organization_id", input.orgId).eq("user_id", userId).maybeSingle();
   if (member) {
-    if (member.role !== input.role) throw { code: "23505", message: `${email} is already a member of this workspace as ${member.role}.` };
-    await admin.from("organization_members").update({ status: "active", client_id: input.clientId ?? null }).eq("id", member.id);
+    if (member.role !== input.role) throw { code: "23505", message: `${email} already has a sign-in here as ${member.role.replace("_", " ")}.` };
+    await db.from("organization_members").update({ status: "active", ...link }).eq("id", member.id);
   } else {
-    const { error } = await admin.from("organization_members").insert({
-      organization_id: input.orgId, user_id: userId, role: input.role, client_id: input.role === "client" ? input.clientId : null,
+    const { error } = await db.from("organization_members").insert({
+      organization_id: input.orgId, user_id: userId, role: input.role, ...link,
       department: input.department ?? null, designation: input.designation ?? null, employee_code: input.employeeCode ?? null,
       joining_date: input.joiningDate ?? null, status: "active",
     });
     if (error) throw error;
   }
   return { userId, message };
+}
+
+/** Admin sets a new password for any sign-in in their organisation. */
+export async function setPasswordForMember(orgId: string, memberId: string, password: string) {
+  const db = admin();
+  const { data: m } = await db.from("organization_members").select("user_id, profile:profiles(email)").eq("id", memberId).eq("organization_id", orgId).maybeSingle();
+  if (!m) throw { code: "P0002", message: "That sign-in wasn't found." };
+  const { error } = await db.auth.admin.updateUserById(m.user_id as string, { password });
+  if (error) throw { code: "AUTH", message: error.message };
+  return (m.profile as unknown as { email: string } | null)?.email ?? "this person";
 }

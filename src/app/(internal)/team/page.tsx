@@ -22,7 +22,7 @@ export default async function TeamPage() {
   const supabase = await createClient();
   const since = daysAgoTimestamp(30);
   const [{ data: members }, { data: tasks }, { data: pm }, { data: acts }] = await Promise.all([
-    supabase.from("organization_members").select("id, user_id, role, department, designation, employee_code, joining_date, status, profile:profiles(full_name, email, phone)").neq("role", "client").order("created_at"),
+    supabase.from("organization_members").select("id, user_id, role, department, designation, employee_code, joining_date, status, profile:profiles(full_name, email, phone)").in("role", ["admin", "manager", "team_member"]).order("created_at"),
     supabase.from("tasks").select("assigned_to, status, due_date, completed_at"),
     supabase.from("project_members").select("user_id"),
     supabase.from("activity_logs").select("actor_id").gte("created_at", since),
@@ -43,7 +43,7 @@ export default async function TeamPage() {
   return (
     <>
       <PageHeader title="Team" description="Employees, roles and workload. Open tasks and overdue counts update live." breadcrumbs={[{ label: "Dashboard", href: "/dashboard" }, { label: "Team" }]} actions={admin && <AddMemberButton />} />
-      {admin && !isAdminClientConfigured() && <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">Inviting users needs <code>SUPABASE_SERVICE_ROLE_KEY</code> on the server. Add it to your environment (see docs/SUPABASE.md).</p>}
+      {admin && !isAdminClientConfigured() && <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">Creating sign-ins and setting passwords needs <code>SUPABASE_SERVICE_ROLE_KEY</code> on the server. Add it in Vercel → Settings → Environment Variables (see docs/SUPABASE.md).</p>}
       <Panel bodyClassName="p-0">
         {rows.length === 0 ? <EmptyState icon={Users} title="No team members" /> : (
           <Table>

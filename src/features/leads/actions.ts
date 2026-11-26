@@ -8,6 +8,9 @@ import { fail, formToObject, ok, toActionError, unwrap, type ActionState } from 
 import { logActivity } from "@/lib/activity";
 import { LEAD_STATUS, type LeadStatus } from "@/lib/constants";
 import { activitySchema, convertSchema, leadSchema } from "./schema";
+import { portalUserSchema } from "@/features/clients/schema";
+import { inviteUser } from "@/features/team/invite";
+import { parseLogin } from "@/features/team/login-schema";
 
 function toRow(v: ReturnType<typeof leadSchema.parse>) {
   const { "services[]": services, ...rest } = v;
@@ -96,4 +99,29 @@ export async function convertLead(leadId: string, _: ActionState, fd: FormData):
     revalidatePath("/leads"); revalidatePath("/clients"); revalidatePath("/projects");
   } catch (e) { return toActionError(e); }
   redirect(`/clients/${clientId}`);
+}
+
+/** Owner/admin gives a lead a sign-in that shows only the quotations sent to them. */
+export async function createLeadLogin(leadId: string, _: ActionState, fd: FormData): Promise<ActionState> {
+  try {
+    const s = await authorizeStaff("team.manage");
+    const v = portalUserSchema.parse(formToObject(fd));
+    const supabase = await createClient();
+    const lead = unwrap(await supabase.from("leads").select("id, code, converted_client_id").eq("id", leadId).single());
+    if (lead.converted_client_id) return fail("This lead is already a client — create the login from the client's page instead.");
+    const result = await inviteUser({ ...parseLogin(fd), orgId: s.orgId, email: v.email, fullName: v.full_name, role: "lead", leadId });
+    await supabase.from("lead_activities").insert({ organization_id: s.orgId, lead_id: leadId, type: "note", content: `Portal sign-in created for ${v.email}`, created_by: s.userId });
+    revalidatePath(`/leads/${leadId}`);
+    return ok(result.message);
+  } catch (e) { return toActionError(e); }
+}
+
+export async function setLeadLoginAccess(leadId: string, memberId: string, active: boolean): Promise<ActionState> {
+  try {
+    await authorizeStaff("team.manage");
+    const supabase = await createClient();
+    unwrap(await supabase.from("organization_members").update({ status: active ? "active" : "inactive" }).eq("id", memberId).eq("role", "lead").select("id").single());
+    revalidatePath(`/leads/${leadId}`);
+    return ok(active ? "Sign-in restored" : "Sign-in disabled");
+  } catch (e) { return toActionError(e); }
 }

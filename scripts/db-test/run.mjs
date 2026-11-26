@@ -241,6 +241,53 @@ await as(null, async () => {
   check("anon reads nothing", String(await count(`select * from clients`)).includes("permission denied"));
 });
 
+
+console.log("\nLead portal logins");
+await user("leadUser", "lead@x.in"); await user("leadUser2", "lead2@x.in");
+const ldA = (await one(`insert into leads (organization_id, company_name, contact_person, email) values ($1,'Sri Chaitanya','Ravi','ravi@x.in') returning id`, [ids.org])).id;
+const ldB = (await one(`insert into leads (organization_id, company_name) values ($1,'Narayana') returning id`, [ids.org])).id;
+check("member_lead_link: lead role needs a lead", (await tryq(`insert into organization_members (organization_id,user_id,role) values ($1,$2,'lead')`, [ids.org, ids.leadUser])).includes("member_lead_link"));
+check("member_lead_link: staff can't carry a lead", (await tryq(`insert into organization_members (organization_id,user_id,role,lead_id) values ($1,$2,'team_member',$3)`, [ids.org, ids.leadUser, ldA])).includes("member_lead_link"));
+await db.query(`insert into organization_members (organization_id,user_id,role,lead_id) values ($1,$2,'lead',$3), ($1,$4,'lead',$5)`, [ids.org, ids.leadUser, ldA, ids.leadUser2, ldB]);
+const lq = await one(`insert into quotations (organization_id, lead_id, title, status) values ($1,$2,'Prospectus design','sent') returning id`, [ids.org, ldA]);
+const lqDraft = await one(`insert into quotations (organization_id, lead_id, title) values ($1,$2,'Draft idea') returning id`, [ids.org, ldA]);
+await db.query(`insert into quotation_items (organization_id, quotation_id, position, name, quantity, unit_price, tax_rate) values ($1,$2,0,'Design',1,10000,18)`, [ids.org, lq.id]);
+await as("leadUser", async () => {
+  check("lead sees own sent quotation only (not drafts)", (await count(`select id from quotations`)) === 1);
+  check("lead sees its quotation items", (await count(`select id from quotation_items`)) === 1);
+  check("lead_portal_me returns the lead", (await one(`select company_name from lead_portal_me()`))?.company_name === "Sri Chaitanya");
+  check("lead sees no leads/clients/projects/invoices", (await count(`select id from leads`)) === 0 && (await count(`select id from clients`)) === 0 && (await count(`select id from projects`)) === 0 && (await count(`select id from invoices`)) === 0);
+  check("lead can read company settings (for the PDF)", (await count(`select organization_id from company_settings`)) === 1);
+  await db.query(`select client_mark_quotation_viewed($1)`, [lq.id]);
+  check("lead marks quotation viewed", (await one(`select status from quotations where id=$1`, [lq.id])).status === "viewed");
+  check("lead cannot respond to a draft", (await tryq(`select client_respond_quotation($1, true)`, [lqDraft.id])) !== "ok");
+  check("lead can't update quotations directly", (await count(`update quotations set total = 1 returning id`)) === 0);
+});
+await as("leadUser2", async () => {
+  check("other lead sees none of it", (await count(`select id from quotations`)) === 0);
+  check("other lead cannot respond", (await tryq(`select client_respond_quotation($1, false)`, [lq.id])).includes("not found"));
+});
+await as("clientA", async () => {
+  check("client can't see lead quotations", (await count(`select id from quotations where lead_id is not null`)) === 0);
+});
+await as("leadUser", async () => {
+  check("lead accepts quotation", (await tryq(`select client_respond_quotation($1, true, 'Go ahead')`, [lq.id])) === "ok");
+});
+await as("manager", async () => {
+  const r = await db.query(`select convert_lead($1) r`, [ldA]).then((x) => x.rows[0].r).catch((e) => e.message);
+  check("convert_lead works with a lead login", typeof r === "object" && r.client_id, r);
+  ids.cLead = r.client_id;
+});
+const promoted = await one(`select role, client_id, lead_id from organization_members where user_id=$1`, [ids.leadUser]);
+check("lead login became a client login", promoted.role === "client" && promoted.client_id === ids.cLead && promoted.lead_id === null, promoted);
+await as("leadUser", async () => {
+  check("converted login sees its quotation as a client", (await count(`select id from quotations where client_id=$1`, [ids.cLead])) === 1);
+  check("converted login sees no lead portal", (await count(`select * from lead_portal_me()`)) === 0);
+});
+await as("manager", async () => {
+  check("manager can't call promote_lead_logins for an unconverted lead", (await tryq(`select promote_lead_logins($1,$2)`, [ldB, ids.cA])).includes("Not allowed"));
+});
+
 console.log("\nReminders");
 await db.query(`update tasks set due_date = current_date - 1, status='todo' where id=$1`, [ids.task]);
 await db.query(`update invoices set status='unpaid' where id=$1`, [inv.id]).catch(() => {});

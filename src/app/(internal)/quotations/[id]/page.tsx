@@ -43,8 +43,8 @@ export default async function QuotationPage({ params }: PageProps<"/quotations/[
           {manage && <>
             {editable && <Button variant="outline" render={<Link href={`/quotations/${id}/edit`} />}><Pencil /> Edit</Button>}
             <ConfirmAction trigger={<Button variant="outline"><Copy /> Duplicate</Button>} title="Duplicate quotation?" description="Creates a new draft with the same line items." confirmLabel="Duplicate" destructive={false} action={duplicateQuotation.bind(null, id)} />
-            {q.status === "draft" && (q.client_id ? (
-              <ConfirmAction trigger={<Button><Send /> Mark as sent</Button>} title="Share with client?" description="The quotation becomes visible in the client's portal, where they can accept or decline it. No email is sent — email delivery isn't configured; share the PDF yourself if needed." confirmLabel="Mark as sent" destructive={false} action={setQuotationStatus.bind(null, id, "sent")} />
+            {q.status === "draft" && (q.client_id || q.lead_id ? (
+              <ConfirmAction trigger={<Button><Send /> Mark as sent</Button>} title={q.client_id ? "Share with client?" : "Share with lead?"} description={`The quotation becomes visible to ${q.client_id ? "the client in their portal" : "the lead when they sign in (create their sign-in on the lead page)"}, where they can accept or decline it. No email is sent — share the PDF yourself if needed.`} confirmLabel="Mark as sent" destructive={false} action={setQuotationStatus.bind(null, id, "sent")} />
             ) : <Button disabled title="Convert the lead to a client to share via the portal"><Send /> Mark as sent</Button>)}
             {["sent", "viewed"].includes(q.status) && <>
               <ConfirmAction trigger={<Button variant="outline"><Check /> Accepted</Button>} title="Record acceptance?" description="Use this if the client accepted outside the portal." confirmLabel="Mark accepted" destructive={false} action={setQuotationStatus.bind(null, id, "accepted")} />
@@ -55,7 +55,7 @@ export default async function QuotationPage({ params }: PageProps<"/quotations/[
           </>}
         </>}
       />
-      {q.lead && !q.client_id && <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">This quotation is for lead <strong>{q.lead.company_name}</strong>. Convert the lead to a client to share it via the portal or invoice it.</p>}
+      {q.lead && !q.client_id && <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">This quotation is for lead <strong>{q.lead.company_name}</strong>. Mark it as sent to share it with the lead&apos;s sign-in; convert the lead to a client to invoice it.</p>}
       {manage && <TemplatePicker key={q.template} value={q.template} save={setQuotationTemplate.bind(null, id)} className="mx-auto mb-3 max-w-4xl" />}
       <FinanceDocument template={q.template} kind="Quotation" number={q.number} title={q.title} company={company} party={q.client ?? (q.lead ? { company_name: q.lead.company_name } : null)} items={items} taxMode={q.tax_mode}
         meta={[{ label: "Date", value: formatDate(q.issue_date) }, { label: "Valid until", value: formatDate(q.valid_until) }, ...(q.project ? [{ label: "Project", value: q.project.code }] : [])]}
