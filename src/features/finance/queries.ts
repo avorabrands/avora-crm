@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import type { DocTemplate } from "@/lib/doc-templates";
 import { createClient } from "@/lib/supabase/server";
 import { ilikeTerm, listParams, str, type ResolvedParams } from "@/lib/list-params";
@@ -30,7 +31,7 @@ export async function listQuotations(sp: ResolvedParams, fixed: { clientId?: str
   return { rows: (data ?? []) as unknown as QuotationRow[], total: count ?? 0, params: p };
 }
 
-export async function getQuotation(id: string) {
+async function loadQuotation(id: string) {
   const supabase = await createClient();
   const [{ data: q }, { data: items }] = await Promise.all([
     supabase.from("quotations").select(Q_SELECT).eq("id", id).maybeSingle(),
@@ -67,7 +68,7 @@ export async function listInvoices(sp: ResolvedParams, fixed: { clientId?: strin
   return { rows: (data ?? []) as unknown as InvoiceRow[], total: count ?? 0, params: p };
 }
 
-export async function getInvoice(id: string) {
+async function loadInvoice(id: string) {
   const supabase = await createClient();
   const [{ data: inv }, { data: items }, { data: payments }] = await Promise.all([
     supabase.from("invoices").select(I_SELECT).eq("id", id).maybeSingle(),
@@ -101,7 +102,7 @@ export async function listPayments(sp: ResolvedParams, fixed: { clientId?: strin
   return { rows: (data ?? []) as unknown as PaymentRow[], total: count ?? 0, params: p };
 }
 
-export async function getPayment(id: string) {
+async function loadPayment(id: string) {
   const supabase = await createClient();
   const { data } = await supabase.from("payments").select(P_SELECT).eq("id", id).maybeSingle();
   return data as unknown as PaymentRow | null;
@@ -130,3 +131,12 @@ export type AgreementRow = {
   id: string; title: string; status: string; start_date: string | null; end_date: string | null; signed_date: string | null; client_visible: boolean; notes: string | null;
   client_id: string; project_id: string | null; file_id: string | null; created_at: string; client: { company_name: string } | null; project: { name: string } | null; file: { id: string; name: string } | null;
 };
+
+/** Cached per request, so the page and its metadata (PDF file name) share one query. */
+export const getQuotation = cache(loadQuotation);
+
+/** Cached per request, so the page and its metadata (PDF file name) share one query. */
+export const getInvoice = cache(loadInvoice);
+
+/** Cached per request, so the page and its metadata (PDF file name) share one query. */
+export const getPayment = cache(loadPayment);

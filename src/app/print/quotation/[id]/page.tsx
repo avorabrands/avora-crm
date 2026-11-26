@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth/session";
 import { companySettings } from "@/features/common/lookups";
 import { getQuotation } from "@/features/finance/queries";
+import { documentFileName, documentSubject } from "@/lib/doc-templates";
 import { FinanceDocument } from "@/features/finance/components/document";
 import { formatDate } from "@/lib/format";
 import { PrintBar } from "../../print-bar";
@@ -9,6 +11,14 @@ import { asTemplate } from "@/lib/doc-templates";
 import { can } from "@/lib/auth/permissions";
 import { setQuotationTemplate } from "@/features/finance/quotation-actions";
 import { portalMe } from "@/features/portal/queries";
+
+/** The page title becomes the file name in "Save as PDF". */
+export async function generateMetadata({ params }: PageProps<"/print/quotation/[id]">): Promise<Metadata> {
+  const { id } = await params;
+  const { quotation: q, items } = await getQuotation(id);
+  if (!q) return { title: "Quotation" };
+  return { title: { absolute: documentFileName(`Quotation ${q.number}`, q.client?.company_name ?? q.lead?.company_name, documentSubject(q.title, items)) } };
+}
 
 export default async function PrintQuotation({ params, searchParams }: PageProps<"/print/quotation/[id]">) {
   const s = await requireSession();

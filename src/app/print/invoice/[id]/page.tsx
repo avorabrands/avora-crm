@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth/session";
 import { companySettings } from "@/features/common/lookups";
 import { getInvoice } from "@/features/finance/queries";
+import { documentFileName, documentSubject } from "@/lib/doc-templates";
 import { FinanceDocument } from "@/features/finance/components/document";
 import { formatDate } from "@/lib/format";
 import { PrintBar } from "../../print-bar";
@@ -9,6 +11,14 @@ import { asTemplate } from "@/lib/doc-templates";
 import { can } from "@/lib/auth/permissions";
 import { setInvoiceTemplate } from "@/features/finance/invoice-actions";
 import { portalMe } from "@/features/portal/queries";
+
+/** The page title becomes the file name in "Save as PDF". */
+export async function generateMetadata({ params }: PageProps<"/print/invoice/[id]">): Promise<Metadata> {
+  const { id } = await params;
+  const { invoice: inv, items } = await getInvoice(id);
+  if (!inv) return { title: "Invoice" };
+  return { title: { absolute: documentFileName(`Invoice ${inv.number}`, inv.client?.company_name, documentSubject(inv.project?.name, items)) } };
+}
 
 export default async function PrintInvoice({ params, searchParams }: PageProps<"/print/invoice/[id]">) {
   const s = await requireSession();

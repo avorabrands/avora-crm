@@ -37,3 +37,24 @@ export function amountInWordsINR(amount: number) {
   const r = parts.join(" ") || "Zero";
   return `Rupees ${r}${paise ? ` and ${belowHundred(paise)} Paise` : ""} Only`;
 }
+
+/**
+ * File name for "Save as PDF" (browsers use the page title):
+ * "Quotation QT-2026-0001 - Vydehi - Brochure Design". Strips characters that
+ * Windows/macOS don't allow in file names.
+ */
+export function documentFileName(...parts: (string | null | undefined)[]) {
+  return parts
+    .map((p) => (p ?? "").replace(/[\\/:*?"<>|\n\r\t]+/g, " ").replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .join(" - ")
+    .slice(0, 150)
+    .trim();
+}
+
+/** Subject for the file name: the title, else the first item ("Logo design +2 more"). */
+export function documentSubject(title: string | null | undefined, items: { name: string }[]) {
+  if (title?.trim()) return title;
+  if (!items.length) return null;
+  return items.length > 1 ? `${items[0].name} +${items.length - 1} more` : items[0].name;
+}

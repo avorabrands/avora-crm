@@ -189,3 +189,12 @@
   [data-slot="dropdown-menu-item"], [data-slot="command-item"] { min-height: 44px; }
   input[type="checkbox"]:not(.sr-only) { width: 20px; height: 20px; }
 }
+
+/* Printing / Save as PDF: only the document — no toasts, progress bar or other floating UI. */
+@media print {
+  [data-sonner-toaster],
+  [data-nav-progress],
+  [data-slot="tooltip-content"] {
+    display: none !important;
+  }
+}
