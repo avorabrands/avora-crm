@@ -85,14 +85,14 @@ export function BillingForm({ s }: { s: CompanySettings | null }) {
 export function ProfileForms({ name, phone, email }: { name: string; phone: string | null; email: string }) {
   return (
     <div className="grid gap-8 lg:grid-cols-2">
-      <ActionForm action={saveProfile} className="grid gap-4">
+      <ActionForm action={saveProfile} className="grid content-start gap-4">
         <p className="text-sm font-semibold">Your details</p>
         <Field name="full_name" label="Full name" required><Input name="full_name" defaultValue={name} /></Field>
         <Field name="phone" label="Phone"><Input name="phone" defaultValue={phone ?? ""} /></Field>
         <Field label="Email" hint="Contact an admin to change your sign-in email."><Input value={email} disabled /></Field>
         <div className="flex justify-end"><SubmitButton>Save profile</SubmitButton></div>
       </ActionForm>
-      <ActionForm action={changePassword} className="grid gap-4" resetOnSuccess>
+      <ActionForm action={changePassword} className="grid content-start gap-4" resetOnSuccess>
         <p className="text-sm font-semibold">Change password</p>
         <Field name="password" label="New password"><PasswordInput name="password" autoComplete="new-password" /></Field>
         <Field name="confirm" label="Confirm password"><PasswordInput name="confirm" autoComplete="new-password" /></Field>

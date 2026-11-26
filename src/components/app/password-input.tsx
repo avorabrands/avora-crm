@@ -5,7 +5,10 @@ import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-/** Password box with a show/hide eye. Hides itself again on submit so browsers still save it as a password. */
+/**
+ * Password box with a show/hide eye. The icon shows the current state: open eye = password visible,
+ * closed eye = hidden. Hides itself again on submit so browsers still save it as a password.
+ */
 export function PasswordInput({ className, ...props }: Omit<React.ComponentProps<typeof Input>, "type">) {
   const [visible, setVisible] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -17,10 +20,11 @@ export function PasswordInput({ className, ...props }: Omit<React.ComponentProps
     return () => form?.removeEventListener("submit", hide);
   }, []);
 
-  const Icon = visible ? EyeOff : Eye;
+  const Icon = visible ? Eye : EyeOff;
   return (
     <div ref={wrap} className="relative">
-      <Input {...props} type={visible ? "text" : "password"} autoCapitalize="none" autoCorrect="off" spellCheck={false} className={cn("pr-11", className)} />
+      {/* block: an inline input sits on a text line and leaves space below it, which pushed the eye off-centre */}
+      <Input {...props} type={visible ? "text" : "password"} autoCapitalize="none" autoCorrect="off" spellCheck={false} className={cn("block pr-11", className)} />
       <button
         type="button"
         aria-label={visible ? "Hide password" : "Show password"}

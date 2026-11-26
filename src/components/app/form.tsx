@@ -27,7 +27,7 @@ export function Field({ name, label, hint, required, children, className }: { na
   const control = isValidElement<{ id?: string; name?: string; "aria-invalid"?: boolean }>(children) && children.props.name ? children : null;
   const controlId = control ? control.props.id ?? `${uid}-${control.props.name}` : undefined;
   return (
-    <div className={cn("grid gap-1.5", className)} data-invalid={!!error || undefined}>
+    <div className={cn("grid content-start gap-1.5", className)} data-invalid={!!error || undefined}>
       <Label htmlFor={controlId} className="text-xs font-medium">
         {label}{required && <span className="text-destructive"> *</span>}
       </Label>
