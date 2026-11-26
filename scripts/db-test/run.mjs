@@ -288,6 +288,88 @@ await as("manager", async () => {
   check("manager can't call promote_lead_logins for an unconverted lead", (await tryq(`select promote_lead_logins($1,$2)`, [ldB, ids.cA])).includes("Not allowed"));
 });
 
+
+console.log("\nManager journey (as the app does it)");
+await as("manager", async () => {
+  const ok = (r) => r === "ok";
+  const L = await db.query(`insert into leads (organization_id, company_name, status, created_by) values ($1,'Journey College','new',$2) returning id, code`, [ids.org, ids.manager]).then((r) => r.rows[0]).catch((e) => e.message);
+  check("add lead (insert … returning)", L?.id, L);
+  check("edit lead", ok(await tryq(`update leads set contact_person='Asha', status='contacted' where id=$1 returning id`, [L.id])));
+  check("log lead activity", ok(await tryq(`insert into lead_activities (organization_id, lead_id, type, content, created_by) values ($1,$2,'call','Called',$3) returning id`, [ids.org, L.id, ids.manager])));
+  check("log activity (rpc)", ok(await tryq(`select log_activity($1,'lead',$2,'created','x','{}'::jsonb,null,null,false)`, [ids.org, L.id])));
+  const O = await db.query(`insert into opportunities (organization_id, title, lead_id, stage, value, created_by) values ($1,'Prospectus',$2,'quotation_sent',50000,$3) returning id`, [ids.org, L.id, ids.manager]).then((r) => r.rows[0]).catch((e) => e.message);
+  check("add pipeline deal", O?.id, O);
+  check("move deal on board", ok(await tryq(`update opportunities set stage='negotiation' where id=$1 returning id`, [O.id])));
+  const qid = await db.query(`select save_quotation(null,$1,$2,$3) id`, [ids.org, { lead_id: L.id, title: "Prospectus", issue_date: "2026-11-26", tax_mode: "inter_state", template: "standard" }, JSON.stringify([{ name: "Design", quantity: 1, unit_price: 10000, tax_rate: 18 }])]).then((r) => r.rows[0].id).catch((e) => e.message);
+  check("save quotation for a lead", String(qid).length === 36, qid);
+  check("mark lead quotation sent", ok(await tryq(`update quotations set status='sent', sent_at=now() where id=$1 returning id`, [qid])));
+  check("change quotation template", ok(await tryq(`update quotations set template='modern' where id=$1 returning id`, [qid])));
+  const conv = await db.query(`select convert_lead($1) r`, [L.id]).then((r) => r.rows[0].r).catch((e) => e.message);
+  check("convert lead to client", conv?.client_id, conv);
+  const P = await db.query(`insert into projects (organization_id, name, client_id, manager_id, created_by) values ($1,'Journey Prospectus',$2,$3,$3) returning id`, [ids.org, conv.client_id, ids.manager]).then((r) => r.rows[0]).catch((e) => e.message);
+  check("create project", P?.id, P);
+  check("add project member", ok(await tryq(`insert into project_members (project_id, user_id, organization_id) values ($1,$2,$3) returning project_id`, [P.id, ids.designer2, ids.org])));
+  check("add milestone", ok(await tryq(`insert into project_milestones (project_id, organization_id, title, amount, position) values ($1,$2,'Advance',5000,0) returning id`, [P.id, ids.org])));
+  const D = await db.query(`insert into deliverables (organization_id, project_id, name, position) values ($1,$2,'Course 1',0), ($1,$2,'Course 2',1) returning id`, [ids.org, P.id]).then((r) => r.rows).catch((e) => e.message);
+  check("add deliverables", Array.isArray(D) && D.length === 2, D);
+  check("update deliverables (bulk)", ok(await tryq(`update deliverables set assigned_to=$1, design_status='in_progress' where project_id=$2 returning id`, [ids.designer2, P.id])));
+  check("send deliverables to client", ok(await tryq(`update deliverables set client_visible=true, client_review_status='pending', internal_review_status='approved', submitted_at=current_date where id=$1 returning id`, [D[0].id])));
+  check("record client approval on their behalf", ok(await tryq(`select client_review_deliverable($1,'approved',null)`, [D[0].id])));
+  const T = await db.query(`insert into tasks (organization_id, project_id, title, assigned_to, created_by) values ($1,$2,'Layout',$3,$4) returning id`, [ids.org, P.id, ids.designer2, ids.manager]).then((r) => r.rows[0]).catch((e) => e.message);
+  check("create task", T?.id, T);
+  check("complete task", ok(await tryq(`update tasks set status='completed' where id=$1 returning id`, [T.id])));
+  check("delete task", ok(await tryq(`delete from tasks where id=$1 returning id`, [T.id])));
+  const iid = await db.query(`select save_invoice(null,$1,$2,$3) id`, [ids.org, { client_id: conv.client_id, project_id: P.id, invoice_date: "2026-11-26", due_date: "2026-11-26", tax_mode: "inter_state", template: "standard" }, JSON.stringify([{ name: "Design", hsn_sac: "998391", quantity: 1, unit_price: 10000, tax_rate: 18 }])]).then((r) => r.rows[0].id).catch((e) => e.message);
+  check("create invoice", String(iid).length === 36, iid);
+  check("issue invoice", ok(await tryq(`update invoices set status='unpaid', issued_at=now() where id=$1 returning id`, [iid])));
+  const pay = await db.query(`insert into payments (organization_id, invoice_id, client_id, project_id, payment_date, amount, method, payment_type, recorded_by) values ($1,$2,$3,$4,current_date,5000,'upi','advance',$5) returning id, receipt_number`, [ids.org, iid, conv.client_id, P.id, ids.manager]).then((r) => r.rows[0]).catch((e) => e.message);
+  check("record payment", pay?.receipt_number, pay);
+  check("invoice becomes partially paid", (await one(`select status from invoices where id=$1`, [iid]))?.status === "partially_paid");
+  check("manager cannot delete a payment", (await count(`delete from payments where id=$1 returning id`, [pay.id])) === 0);
+  check("add agreement", ok(await tryq(`insert into agreements (organization_id, client_id, project_id, title, status, created_by) values ($1,$2,$3,'MSA','draft',$4) returning id`, [ids.org, conv.client_id, P.id, ids.manager])));
+  const iid2 = await db.query(`select save_invoice(null,$1,$2,$3) id`, [ids.org, { client_id: conv.client_id, invoice_date: "2026-11-26", due_date: "2026-11-30", tax_mode: "none" }, JSON.stringify([{ name: "Extra", quantity: 1, unit_price: 100, tax_rate: 0 }])]).then((r) => r.rows[0].id).catch((e) => e.message);
+  check("cancel an unpaid invoice", ok(await tryq(`update invoices set status='cancelled' where id=$1 returning id`, [iid2])));
+  check("manager cannot delete invoices", (await count(`delete from invoices where id=$1 returning id`, [iid2])) === 0);
+  check("manager sees team list", (await count(`select id from organization_members where role in ('admin','manager','team_member')`)) >= 3);
+  check("manager can't change company settings", (await count(`update company_settings set company_name='X' returning organization_id`)) === 0);
+  ids.jP = P.id; ids.jClient = conv.client_id; ids.jD2 = D[1].id;
+});
+
+console.log("\nTeam member journey (designer2 on the journey project)");
+await as("designer2", async () => {
+  check("sees the project they were added to", (await count(`select id from projects where id=$1`, [ids.jP])) === 1);
+  check("sees its deliverables", (await count(`select id from deliverables where project_id=$1`, [ids.jP])) === 2);
+  check("can update own deliverable", (await tryq(`update deliverables set design_status='in_progress' where id=$1 returning id`, [ids.jD2])) === "ok");
+  const T = await db.query(`insert into tasks (organization_id, project_id, title, assigned_to, created_by) values ($1,$2,'My checklist',$3,$3) returning id`, [ids.org, ids.jP, ids.designer2]).then((r) => r.rows[0]).catch((e) => e.message);
+  check("can add a task on own project", T?.id, T);
+  if (T?.id) {
+    check("can comment on own task", (await tryq(`insert into task_comments (organization_id, task_id, author_id, body) values ($1,$2,$3,'done') returning id`, [ids.org, T.id, ids.designer2])) === "ok");
+    check("can move task to review", (await tryq(`update tasks set status='internal_review' where id=$1 returning id`, [T.id])) === "ok");
+  }
+  check("cannot add a task on someone else's project", (await tryq(`insert into tasks (organization_id, project_id, title, created_by) values ($1,$2,'x',$3) returning id`, [ids.org, ids.pB, ids.designer2])) !== "ok");
+  check("cannot see invoices/payments/quotations", (await count(`select id from invoices`)) === 0 && (await count(`select id from payments`)) === 0 && (await count(`select id from quotations`)) === 0);
+  check("cannot see the team list beyond names", (await count(`select id from organization_members`)) >= 1);
+});
+
+console.log("\nClient journey (converted lead's client)");
+await db.query(`insert into auth.users (email) values ('jc@x.in')`);
+ids.jcUser = (await one(`select id from auth.users where email='jc@x.in'`)).id;
+await db.query(`insert into organization_members (organization_id, user_id, role, client_id) values ($1,$2,'client',$3)`, [ids.org, ids.jcUser, ids.jClient]);
+ids.jc = ids.jcUser;
+await (async () => {
+  await db.exec(`reset role; select set_config('request.jwt.claim.sub', '${ids.jcUser}', false); set role authenticated;`);
+  try {
+    check("client sees own project", (await count(`select id from projects`)) === 1);
+    check("client sees only the shared deliverable", (await count(`select id from deliverables`)) === 1);
+    check("client sees issued invoice + items", (await count(`select id from invoices`)) >= 1 && (await count(`select id from invoice_items`)) >= 1);
+    check("client sees own payment (receipt)", (await count(`select id from payments`)) === 1);
+    check("client sees quotation from when they were a lead", (await count(`select id from quotations`)) === 1);
+    check("client can't see agreements still in draft", (await count(`select id from agreements`)) === 0);
+    check("client can update own profile", (await tryq(`update profiles set phone='9999' where id=$1 returning id`, [ids.jcUser])) === "ok");
+    check("client reads company settings (PDF header)", (await count(`select organization_id from company_settings`)) === 1);
+  } finally { await db.exec(`reset role;`); }
+})();
+
 console.log("\nReminders");
 await db.query(`update tasks set due_date = current_date - 1, status='todo' where id=$1`, [ids.task]);
 await db.query(`update invoices set status='unpaid' where id=$1`, [inv.id]).catch(() => {});
