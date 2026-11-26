@@ -1,6 +1,6 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/app/password-input";
 import { ActionForm, Field, SubmitButton } from "@/components/app/form";
 import { updatePassword } from "@/features/auth/actions";
 
@@ -12,8 +12,8 @@ export default function ResetPasswordPage() {
         <p className="text-sm text-muted-foreground">Use at least 8 characters.</p>
       </div>
       <ActionForm action={updatePassword} className="grid gap-4">
-        <Field name="password" label="New password"><Input id="password" name="password" type="password" autoComplete="new-password" /></Field>
-        <Field name="confirm" label="Confirm password"><Input id="confirm" name="confirm" type="password" autoComplete="new-password" /></Field>
+        <Field name="password" label="New password"><PasswordInput id="password" name="password" autoComplete="new-password" /></Field>
+        <Field name="confirm" label="Confirm password"><PasswordInput id="confirm" name="confirm" autoComplete="new-password" /></Field>
         <SubmitButton className="w-full">Update password</SubmitButton>
       </ActionForm>
     </div>

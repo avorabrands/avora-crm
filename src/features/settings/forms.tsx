@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Building2, Hash, Landmark, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/app/password-input";
 import { Textarea } from "@/components/ui/textarea";
 import { ActionForm, Field, NativeSelect, SubmitButton } from "@/components/app/form";
 import { INDIAN_STATES } from "@/lib/constants";
@@ -93,8 +94,8 @@ export function ProfileForms({ name, phone, email }: { name: string; phone: stri
       </ActionForm>
       <ActionForm action={changePassword} className="grid gap-4" resetOnSuccess>
         <p className="text-sm font-semibold">Change password</p>
-        <Field name="password" label="New password"><Input name="password" type="password" autoComplete="new-password" /></Field>
-        <Field name="confirm" label="Confirm password"><Input name="confirm" type="password" autoComplete="new-password" /></Field>
+        <Field name="password" label="New password"><PasswordInput name="password" autoComplete="new-password" /></Field>
+        <Field name="confirm" label="Confirm password"><PasswordInput name="confirm" autoComplete="new-password" /></Field>
         <div className="flex justify-end"><SubmitButton>Update password</SubmitButton></div>
       </ActionForm>
     </div>
