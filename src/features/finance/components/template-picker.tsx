@@ -15,6 +15,7 @@ export function TemplateThumb({ template, className }: { template: DocTemplate; 
     <span aria-hidden className={cn("relative block h-9 w-7 shrink-0 overflow-hidden rounded-[3px] border bg-white shadow-xs", className)}>
       {template === "classic" && <><span className="absolute top-1 left-1 h-1 w-2.5 rounded-sm bg-[#7047EB]" /><span className="absolute top-1 right-1 h-1 w-1.5 rounded-sm bg-slate-300" /><span className="absolute inset-x-1 top-3 h-px bg-slate-200" /><span className="absolute inset-x-1 top-4.5 h-1 rounded-sm bg-slate-100" /><span className="absolute inset-x-1 top-6 h-px bg-slate-200" /><span className="absolute right-1 bottom-1 h-1 w-2.5 rounded-sm bg-slate-300" /></>}
       {template === "modern" && <><span className="absolute inset-x-0 top-0 h-2.5 border-b border-[#0A84E8] bg-[#01030A]" /><span className="absolute inset-x-1 top-3.5 h-1 rounded-sm bg-[#01030A]/85" /><span className="absolute inset-x-1 top-5 h-1 rounded-sm bg-slate-100" /><span className="absolute right-1 bottom-1 h-1.5 w-3.5 rounded-sm bg-[#0A84E8]" /></>}
+      {template === "standard" && <><span className="absolute inset-0.5 border border-slate-300" /><span className="absolute top-1 left-1 size-2 rounded-[2px] bg-[#01030A]" /><span className="absolute top-1.5 right-1 h-1 w-2.5 bg-slate-400" /><span className="absolute inset-x-0.5 top-4 h-1 bg-slate-200" /><span className="absolute inset-x-0.5 top-6 h-px bg-slate-300" /><span className="absolute top-6 bottom-0.5 left-3.5 w-px bg-slate-300" /></>}
       {template === "professional" && <><span className="absolute inset-0.5 border border-slate-600" /><span className="absolute inset-x-0.5 top-0.5 h-1.5 border-b border-slate-600 bg-slate-200" /><span className="absolute inset-x-0.5 top-3.5 h-px bg-slate-500" /><span className="absolute top-3.5 bottom-0.5 left-3 w-px bg-slate-400" /><span className="absolute inset-x-0.5 top-6 h-px bg-slate-500" /></>}
     </span>
   );
@@ -44,7 +45,7 @@ export function TemplatePicker({ value, save, onPreview, className, compact }: {
     });
   };
   return (
-    <div role="radiogroup" aria-label="Document template" className={cn("flex flex-wrap items-center gap-1.5 max-sm:grid max-sm:grid-cols-3 print:hidden", className)}>
+    <div role="radiogroup" aria-label="Document template" className={cn("flex flex-wrap items-center gap-1.5 max-sm:grid max-sm:grid-cols-2 print:hidden", className)}>
       {!compact && <span className="mr-1 text-xs font-medium text-muted-foreground max-sm:hidden">Template</span>}
       {DOCUMENT_TEMPLATES.map((t) => (
         <button key={t} type="button" role="radio" aria-checked={current === t} title={TEMPLATE_INFO[t].description} onClick={() => choose(t)}
@@ -62,7 +63,7 @@ export function TemplatePicker({ value, save, onPreview, className, compact }: {
 export function TemplateField({ name = "template", defaultValue }: { name?: string; defaultValue: DocTemplate }) {
   const [v, setV] = useState(defaultValue);
   return (
-    <div role="radiogroup" aria-label="Template" className="grid gap-2 sm:grid-cols-3">
+    <div role="radiogroup" aria-label="Template" className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
       <input type="hidden" name={name} value={v} />
       {DOCUMENT_TEMPLATES.map((t) => (
         <button key={t} type="button" role="radio" aria-checked={v === t} onClick={() => setV(t)}

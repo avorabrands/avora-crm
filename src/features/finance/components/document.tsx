@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Image from "next/image";
 import { documentTotals, type TaxMode } from "@/lib/tax";
 import { formatDate, formatINR } from "@/lib/format";
@@ -19,6 +20,7 @@ type DocProps = {
 export function FinanceDocument({ template = "classic", ...p }: DocProps & { template?: DocTemplate }) {
   if (template === "modern") return <ModernLayout {...p} />;
   if (template === "professional") return <ProfessionalLayout {...p} />;
+  if (template === "standard") return <StandardLayout {...p} />;
   return <ClassicLayout {...p} />;
 }
 
@@ -34,6 +36,7 @@ function ClassicLayout({ kind, number, title, company, party, meta, items, taxMo
           {company?.legal_name && <p className="mt-2 text-slate-600">{company.legal_name}</p>}
           {company?.address && <p className="max-w-xs whitespace-pre-wrap text-slate-600">{company.address}</p>}
           <p className="text-slate-600">{[company?.email, company?.phone].filter(Boolean).join(" · ")}</p>
+          {company?.website && <p className="text-slate-600">{company.website}</p>}
           {company?.gstin && <p className="text-slate-600">GSTIN: {company.gstin}</p>}
         </div>
         <div className="sm:text-right">
@@ -136,6 +139,7 @@ function ModernLayout({ kind, number, title, company, party, meta, items, taxMod
           {company?.address && <p className="whitespace-pre-wrap text-slate-500">{company.address}</p>}
           {company?.phone && <p className="text-slate-500">{company.phone}</p>}
           {company?.email && <p className="break-all text-slate-500">{company.email}</p>}
+          {company?.website && <p className="text-slate-500">{company.website}</p>}
           {company?.gstin && <p className="text-slate-500">GSTIN {company.gstin}</p>}
         </div>
         <div className="bg-white px-5 py-5 sm:px-8">
@@ -235,6 +239,7 @@ function ProfessionalLayout({ kind, number, title, company, party, meta, items, 
               {company?.address && <p className="whitespace-pre-wrap">{company.address}</p>}
               {company?.phone && <p>{company.phone}</p>}
               {company?.email && <p className="break-all">{company.email}</p>}
+              {company?.website && <p>{company.website}</p>}
               {company?.gstin && <p><span className="font-semibold">GSTIN:</span> {company.gstin}</p>}
               {company?.pan && <p><span className="font-semibold">PAN:</span> {company.pan}</p>}
             </div>
@@ -328,6 +333,134 @@ function ProfessionalLayout({ kind, number, title, company, party, meta, items, 
     </article>
   );
 }
+
+const GST_STATE_CODES: Record<string, string> = {
+  "Jammu and Kashmir": "01", "Himachal Pradesh": "02", Punjab: "03", Chandigarh: "04", Uttarakhand: "05", Haryana: "06", Delhi: "07", Rajasthan: "08",
+  "Uttar Pradesh": "09", Bihar: "10", Sikkim: "11", "Arunachal Pradesh": "12", Nagaland: "13", Manipur: "14", Mizoram: "15", Tripura: "16",
+  Meghalaya: "17", Assam: "18", "West Bengal": "19", Jharkhand: "20", Odisha: "21", Chhattisgarh: "22", "Madhya Pradesh": "23", Gujarat: "24",
+  Maharashtra: "27", Karnataka: "29", Goa: "30", Kerala: "32", "Tamil Nadu": "33", Puducherry: "34", Telangana: "36", "Andhra Pradesh": "37", Ladakh: "38",
+};
+const num2 = (v: number) => Number(v || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** Bordered tax invoice: per-line GST columns, amount in words, notes/terms and a signature box. */
+function StandardLayout({ kind, number, title, company, party, meta, items, taxMode, totals, footer, notes, terms, paymentTerms }: DocProps) {
+  const n = docNumbers(items, taxMode);
+  const intra = taxMode === "intra_state";
+  const isInvoice = kind === "Tax Invoice";
+  const line = "border-slate-300";
+  const supply = party?.state ? `${party.state}${GST_STATE_CODES[party.state] ? ` (${GST_STATE_CODES[party.state]})` : ""}` : null;
+  const taxCols = n.taxed ? (intra ? ["CGST", "SGST"] : ["IGST"]) : [];
+  const lineTax = (it: ItemRow) => Math.round(n.taxable(it) * Number(it.tax_rate)) / 100;
+  const half = (v: number) => Math.round(v * 50) / 100;
+  const taxLabel = (l: string) => l.replace(/^(\w+) @ ([\d.]+)%$/, "$1$2 ($2%)");
+  const metaRows = [{ label: "#", value: number }, ...meta];
+  return (
+    <article className={`mx-auto max-w-4xl bg-white p-3 text-[12px] leading-snug text-slate-900 shadow-sm sm:p-6 print:max-w-none print:p-0 print:shadow-none ${exact}`}>
+      <div className={`border ${line}`}>
+        <header className={`flex flex-wrap items-end justify-between gap-4 border-b ${line} p-4 sm:p-5`}>
+          <div className="flex items-start gap-4">
+            <Image src="/avora-logo.png" alt="" width={72} height={72} className="size-16 shrink-0 rounded-xl sm:size-[72px]" />
+            <div className="text-[11.5px] text-slate-700">
+              <p className="mb-1 text-[15px] font-bold text-slate-900">{company?.company_name ?? "Avora Brands"}</p>
+              {company?.legal_name && company.legal_name !== company.company_name && <p>{company.legal_name}</p>}
+              {company?.address && <p className="whitespace-pre-wrap">{company.address}</p>}
+              {company?.gstin && <p>GSTIN {company.gstin}</p>}
+              {company?.phone && <p>{company.phone}</p>}
+              {company?.email && <p>{company.email}</p>}
+              {company?.website && <p>{company.website}</p>}
+            </div>
+          </div>
+          <h1 className="ml-auto text-[26px] font-light tracking-wide text-slate-900 uppercase sm:text-[30px]">{isInvoice ? "Tax Invoice" : "Quotation"}</h1>
+        </header>
+
+        <div className={`grid border-b ${line} sm:grid-cols-2`}>
+          <dl className={`grid grid-cols-[auto_1fr] gap-x-6 gap-y-0.5 p-2.5 sm:border-r ${line}`}>
+            {metaRows.map((m) => <div key={m.label} className="contents"><dt className="text-slate-600">{m.label}</dt><dd className="font-semibold">: {m.value}</dd></div>)}
+          </dl>
+          <dl className={`grid grid-cols-[auto_1fr] content-start gap-x-6 p-2.5 max-sm:border-t ${line}`}>
+            {supply && <><dt className="text-slate-600">Place Of Supply</dt><dd className="font-semibold">: {supply}</dd></>}
+          </dl>
+        </div>
+
+        <p className={`border-b ${line} bg-slate-100 px-2.5 py-1 font-semibold`}>{isInvoice ? "Bill To" : "Quotation For"}</p>
+        <div className={`border-b ${line} p-2.5`}>
+          <p className="text-[13px] font-bold uppercase">{party?.company_name ?? "—"}</p>
+          {party?.contact_person && <p>Attn: {party.contact_person}</p>}
+          {party?.billing_address && <p className="whitespace-pre-wrap">{party.billing_address}</p>}
+          {party?.gstin && <p>GSTIN {party.gstin}</p>}
+        </div>
+
+        {title && <div className={`border-b ${line} px-3 py-3`}><p className="text-slate-600">Subject :</p><p className="mt-2 uppercase">{title}</p></div>}
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[680px] border-collapse text-[11.5px]">
+            <thead>
+              <tr className="font-bold">
+                <th rowSpan={2} className={`w-8 border-r border-b ${line} px-2 py-1.5 text-center align-bottom`}>#</th>
+                <th rowSpan={2} className={`border-r border-b ${line} px-2 py-1.5 text-left align-bottom`}>Item &amp; Description</th>
+                {n.showHsn && <th rowSpan={2} className={`border-r border-b ${line} px-2 py-1.5 text-left align-bottom`}>HSN/SAC</th>}
+                <th rowSpan={2} className={`border-r border-b ${line} px-2 py-1.5 text-right align-bottom`}>Qty</th>
+                <th rowSpan={2} className={`border-r border-b ${line} px-2 py-1.5 text-right align-bottom`}>Rate</th>
+                {n.showDisc && <th rowSpan={2} className={`border-r border-b ${line} px-2 py-1.5 text-right align-bottom`}>Disc.</th>}
+                {taxCols.map((c) => <th key={c} colSpan={2} className={`border-r border-b ${line} px-2 py-1 text-center`}>{c}</th>)}
+                <th rowSpan={2} className={`border-b ${line} px-2 py-1.5 text-right align-bottom`}>Amount</th>
+              </tr>
+              <tr className="font-bold">
+                {taxCols.map((c) => [<th key={`${c}p`} className={`border-r border-b ${line} px-2 py-1 text-center`}>%</th>, <th key={`${c}a`} className={`border-r border-b ${line} px-2 py-1 text-right`}>Amt</th>])}
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((it, i) => {
+                const tax = lineTax(it);
+                const rate = Number(it.tax_rate);
+                const split = intra ? [[rate / 2, half(tax)], [rate / 2, tax - half(tax)]] : [[rate, tax]];
+                return (
+                  <tr key={it.id} className="align-top">
+                    <td className={`border-r border-b ${line} px-2 py-1.5 text-center`}>{i + 1}</td>
+                    <td className={`border-r border-b ${line} px-2 py-1.5`}><p className="text-slate-700">{it.name}{it.description ? <span className="text-slate-500"> ({it.description})</span> : null}</p></td>
+                    {n.showHsn && <td className={`border-r border-b ${line} px-2 py-1.5`}>{it.hsn_sac}</td>}
+                    <td className={`border-r border-b ${line} px-2 py-1.5 text-right tabular-nums`}>{num2(Number(it.quantity))}</td>
+                    <td className={`border-r border-b ${line} px-2 py-1.5 text-right tabular-nums`}>{num2(Number(it.unit_price))}</td>
+                    {n.showDisc && <td className={`border-r border-b ${line} px-2 py-1.5 text-right tabular-nums`}>{Number(it.discount_pct) ? `${Number(it.discount_pct)}%` : "—"}</td>}
+                    {n.taxed && split.map(([r, a], k) => [
+                      <td key={`p${k}`} className={`border-r border-b ${line} px-2 py-1.5 text-center tabular-nums`}>{r}%</td>,
+                      <td key={`a${k}`} className={`border-r border-b ${line} px-2 py-1.5 text-right tabular-nums`}>{num2(a)}</td>,
+                    ])}
+                    <td className={`border-b ${line} px-2 py-1.5 text-right tabular-nums`}>{num2(n.taxable(it))}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="grid sm:grid-cols-[1.35fr_1fr]">
+          <div className={`space-y-4 p-2.5 sm:border-r ${line}`}>
+            <div><p className="text-slate-600">Total In Words</p><p className="font-bold italic">{amountInWordsINR(totals.total, "invoice")}</p></div>
+            {paymentTerms && <div><p className="text-slate-600">Payment Terms</p><p className="whitespace-pre-wrap">{paymentTerms}</p></div>}
+            {company?.bank_details && <div><p className="text-slate-600">Bank Details</p><p className="whitespace-pre-wrap">{company.bank_details}</p></div>}
+            {notes && <div><p className="text-slate-600">Notes</p><p className="whitespace-pre-wrap">{notes}</p></div>}
+            {terms && <div><p className="text-slate-600">Terms &amp; Conditions</p><p className="whitespace-pre-wrap text-[11px]">{terms}</p></div>}
+          </div>
+          <div className={`flex flex-col max-sm:border-t ${line}`}>
+            <dl className={`grid grid-cols-[1fr_auto] gap-x-6 gap-y-1 border-b ${line} p-2.5 text-right`}>
+              <dt>Sub Total</dt><dd className="tabular-nums">{num2(totals.subtotal)}</dd>
+              {Number(totals.discount_total) > 0 && <><dt>Discount</dt><dd className="tabular-nums">(-) {num2(totals.discount_total)}</dd></>}
+              {n.breakdown.map((b) => <Fragment key={b.label}><dt>{taxLabel(b.label)}</dt><dd className="tabular-nums">{num2(b.amount)}</dd></Fragment>)}
+              <dt className="font-bold">Total</dt><dd className="font-bold tabular-nums">{formatINR2(totals.total)}</dd>
+              {totals.amount_paid !== undefined && Number(totals.amount_paid) > 0 && <><dt>Payment Made</dt><dd className="text-red-600 tabular-nums">(-) {num2(totals.amount_paid)}</dd></>}
+              {totals.balance_due !== undefined && <><dt className="text-[13px] font-bold">Balance Due</dt><dd className="text-[13px] font-bold tabular-nums">{formatINR2(totals.balance_due)}</dd></>}
+            </dl>
+            <div className={`flex min-h-28 flex-1 items-end justify-center border-b ${line} p-2.5`}><p>Authorized Signature</p></div>
+          </div>
+        </div>
+      </div>
+      {footer}
+    </article>
+  );
+}
+
+const formatINR2 = (v: number) => `₹${num2(v)}`;
 
 export function ReceiptDocument({ company, payment }: { company: CompanySettings | null; payment: { receipt_number: string; payment_date: string; amount: number; method: string; payment_type: string; transaction_id: string | null; reference_number: string | null; notes: string | null; client: Party; invoice: { number: string } | null } }) {
   return (

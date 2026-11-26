@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireSession } from "@/lib/auth/session";
 import { companySettings } from "@/features/common/lookups";
 import { getInvoice } from "@/features/finance/queries";
-import { documentFileName, documentSubject } from "@/lib/doc-templates";
+import { documentFileName, documentSubject, invoiceTermsLabel } from "@/lib/doc-templates";
 import { FinanceDocument } from "@/features/finance/components/document";
 import { formatDate } from "@/lib/format";
 import { PrintBar } from "../../print-bar";
@@ -34,7 +34,7 @@ export default async function PrintInvoice({ params, searchParams }: PageProps<"
     <>
       <PrintBar template={template} save={staff ? setInvoiceTemplate.bind(null, id) : undefined} back={s.role === "client" ? `/portal/invoices/${id}` : `/invoices/${id}`} />
       <FinanceDocument template={template} kind="Tax Invoice" number={inv.number} title={inv.project?.name} company={company} party={me ?? inv.client} items={items} taxMode={inv.tax_mode}
-        meta={[{ label: "Invoice date", value: formatDate(inv.invoice_date) }, { label: "Due date", value: formatDate(inv.due_date) }, ...(inv.quotation ? [{ label: "Quotation", value: inv.quotation.number }] : [])]}
+        meta={[{ label: "Invoice date", value: formatDate(inv.invoice_date) }, { label: "Terms", value: invoiceTermsLabel(inv.invoice_date, inv.due_date) }, { label: "Due date", value: formatDate(inv.due_date) }, ...(inv.quotation ? [{ label: "Quotation", value: inv.quotation.number }] : [])]}
         totals={inv} notes={inv.notes} terms={inv.terms ?? company?.default_terms} />
     </>
   );
